@@ -1,0 +1,23 @@
+[project]
+name = "knowledge-pipeline-poc"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "pawarison", email = "pawarison.ty@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "docling>=2.54.0",
+    "ipykernel>=6.30.1",
+    "mistralai>=1.9.10",
+    "pandas>=2.3.2",
+    "pypdf>=4.3.1",
+]
+
+[project.scripts]
+knowledge-pipeline-poc = "knowledge_pipeline_poc:main"
+
+[build-system]
+requires = ["uv_build>=0.8.22,<0.9.0"]
+build-backend = "uv_build"
