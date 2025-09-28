@@ -14,6 +14,7 @@ from docling.utils.profiling import TimeRecorder
 from mistralai import Mistral, models
 
 from extraction.adapter.utils import _image_to_data_url
+from extraction.config import OCR_MODEL
 from extraction.mistral_cost_tracker import mistral_cost_tracker
 
 
@@ -23,7 +24,7 @@ _log = logging.getLogger(__name__)
 class MistralOcrOptions(OcrOptions):
     kind: ClassVar[Literal["mistral"]] = "mistral"
     api_key: str
-    model: str = "mistral-ocr-latest"
+    model: str = OCR_MODEL
     lang: List[str] = ["auto"]  # dont use for mistral
 
 

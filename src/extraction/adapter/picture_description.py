@@ -17,6 +17,7 @@ from mistralai.types import UNSET, UNSET_SENTINEL
 from PIL import Image
 
 from extraction.adapter.utils import _image_to_data_url
+from extraction.config import PICTURE_MODEL, PICTURE_PROMPT
 from extraction.mistral_cost_tracker import mistral_cost_tracker
 
 
@@ -27,8 +28,8 @@ class MistralPictureDescriptionOptions(PictureDescriptionBaseOptions):
     kind: ClassVar[Literal["mistral_api"]] = "mistral_api"
 
     api_key: str
-    model: str = "pixtral-12b"
-    prompt: str = "Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals."
+    model: str = PICTURE_MODEL
+    prompt: str = PICTURE_PROMPT
     temperature: float = 0.2
     max_output_tokens: int = 300
     concurrency: int = 2

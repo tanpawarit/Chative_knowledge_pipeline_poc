@@ -8,6 +8,14 @@ from dataclasses import asdict, dataclass
 from threading import Lock
 from typing import Any, Dict, Mapping, Optional
 
+from extraction.config import (
+    OCR_COST_PER_PAGE,
+    OCR_MODEL,
+    PICTURE_INPUT_COST_PER_MILLION,
+    PICTURE_MODEL,
+    PICTURE_OUTPUT_COST_PER_MILLION,
+)
+
 
 _log = logging.getLogger(__name__)
 
@@ -283,17 +291,17 @@ class MistralCostTracker:
         )
 
 
-# Default instance shared across the project (values sourced from
-# https://docs.mistral.ai/platform/pricing, retrieved October 2024).
-_default_chat_pricing: Dict[str, ChatPricing] = {
-    "pixtral-12b": ChatPricing(
-        input_usd_per_million=0.15,
-        output_usd_per_million=0.15,
-    ),
-}
-_default_ocr_pricing: Dict[str, OcrPricing] = {
-    "mistral-ocr-latest": OcrPricing(per_page_usd=0.001),
-}
+# Default instance shared across the project
+_default_chat_pricing: Dict[str, ChatPricing] = {}
+if PICTURE_MODEL:
+    _default_chat_pricing[PICTURE_MODEL] = ChatPricing(
+        input_usd_per_million=PICTURE_INPUT_COST_PER_MILLION,
+        output_usd_per_million=PICTURE_OUTPUT_COST_PER_MILLION,
+    )
+
+_default_ocr_pricing: Dict[str, OcrPricing] = {}
+if OCR_MODEL:
+    _default_ocr_pricing[OCR_MODEL] = OcrPricing(per_page_usd=OCR_COST_PER_PAGE)
 
 mistral_cost_tracker = MistralCostTracker(
     chat_pricing=_default_chat_pricing,

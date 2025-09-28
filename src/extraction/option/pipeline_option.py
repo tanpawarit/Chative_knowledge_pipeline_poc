@@ -1,13 +1,14 @@
 from docling.datamodel.pipeline_options import ConvertPipelineOptions, PdfPipelineOptions
 
 from extraction.adapter import MistralOcrOptions, MistralPictureDescriptionOptions
+from extraction.config import OCR_MODEL, PICTURE_MODEL, PICTURE_PROMPT
 
 
-def create_picture_description_options(api_key: str) -> MistralPictureDescriptionOptions: 
+def create_picture_description_options(api_key: str) -> MistralPictureDescriptionOptions:
     return MistralPictureDescriptionOptions(
         api_key=api_key,
-        model="pixtral-12b",
-        prompt="Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals.",
+        model=PICTURE_MODEL,
+        prompt=PICTURE_PROMPT,
         temperature=0.2,
         max_output_tokens=300,
         # Conservative settings to reduce timeouts/rate-limit issues
@@ -30,7 +31,7 @@ def build_pdf_pipeline_options(
         images_scale=2.0,
         do_picture_description=True,
         picture_description_options=create_picture_description_options(api_key),
-        ocr_options=MistralOcrOptions(api_key=api_key),
+        ocr_options=MistralOcrOptions(api_key=api_key, model=OCR_MODEL),
     )
 
 
@@ -43,7 +44,7 @@ def build_image_pipeline_options(api_key: str) -> PdfPipelineOptions:
         images_scale=2.0,
         do_picture_description=True,
         picture_description_options=create_picture_description_options(api_key),
-        ocr_options=MistralOcrOptions(api_key=api_key),
+        ocr_options=MistralOcrOptions(api_key=api_key, model=OCR_MODEL),
     )
 
 

@@ -100,7 +100,10 @@ markdown = serializer.serialize().text
 ## Cost tracking
 
 - Runtime usage from the Mistral OCR and picture-description adapters is collected by `extraction.mistral_cost_tracker.mistral_cost_tracker`.
-- Default pricing (October 2024 public list prices) is pre-configured for `pixtral-12b` and `mistral-ocr-latest`. Override them — or add more models — via the `MISTRAL_PRICE_OVERRIDES` environment variable. Example:
+- Configure the adapters and their pricing through environment variables (see `.env`):
+  - `MISTRAL_OCR_MODEL`, `MISTRAL_PICTURE_MODEL`, `MISTRAL_PICTURE_PROMPT` control the SDK calls.
+  - `MISTRAL_OCR_COST_PER_PAGE`, `MISTRAL_PICTURE_INPUT_COST_PER_MILLION`, `MISTRAL_PICTURE_OUTPUT_COST_PER_MILLION` feed the default cost estimates.
+- To override or add model-specific rates dynamically, you can still use the JSON-based `MISTRAL_PRICE_OVERRIDES` environment variable. Example:
 
 ```
 export MISTRAL_PRICE_OVERRIDES='{
