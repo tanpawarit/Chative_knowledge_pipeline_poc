@@ -42,6 +42,7 @@ from extraction.option.pipeline_option import (
 )
 from extraction.picture_serializer import CommentPictureSerializer
 from extraction.ocr_policy import OcrPolicyDecider
+from extraction.mistral_cost_tracker import mistral_cost_tracker
 
 # Suppress benign RuntimeWarnings coming from Docling confidence aggregation
 # (e.g., "Mean of empty slice") when metrics are not applicable for a format.
@@ -55,8 +56,12 @@ if not mistral_key:
         "Missing MISTRAL_KEY. Set it in .env or environment."
     )
 
+# Reset usage tracking for a fresh run and apply any runtime pricing overrides.
+mistral_cost_tracker.reset()
+mistral_cost_tracker.configure_from_environment()
+
 # Source can be a path or URL; we use local path for now
-source = "data/Develop Process_QuantLab.pptx"
+source = "data/Screenshot 2568-07-18 at 12.10.26.png"
 
 # Decide OCR policy per file/format
 policy = OcrPolicyDecider()
@@ -127,3 +132,4 @@ with (output_dir / f"{doc_filename}.md").open("w", encoding="utf-8") as fp:
 
 print(f"Saved markdown to {output_dir / f'{doc_filename}.md'}")
 print(f"Mean_grade: {result.confidence.mean_grade.value}")
+print(mistral_cost_tracker.format_report())

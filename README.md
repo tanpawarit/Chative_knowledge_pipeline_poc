@@ -7,7 +7,7 @@ This module wraps Docling with two custom adapters to improve text and image und
 
 The pipeline decides when to run OCR, enriches pictures with descriptions, and serializes to Markdown with the descriptions preserved as HTML comments next to each image.
 
-![Extraction Flow](../../asset/extraction_flow.png)
+![Extraction Flow](asset/extraction_flow.png)
 
 # Chunking Module
 

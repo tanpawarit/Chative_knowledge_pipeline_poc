@@ -90,12 +90,33 @@ markdown = serializer.serialize().text
 - OCR policy
   - `OcrPolicyDecider(sample_pages=5, char_threshold=200)` controls when PDFs are treated as scanned and passed to OCR.
 - Picture description
-  - Defaults: model `pixtral-12b-2409`, short 2–3 sentence prompt, temperature `0.2`, `max_output_tokens=300`.
+  - Defaults: model `pixtral-12b`, short 2–3 sentence prompt, temperature `0.2`, `max_output_tokens=300`.
   - Conservative defaults for reliability: `concurrency=1`, `timeout_seconds=60.0` (see the `create_picture_description_options` helper).
 - OCR
   - Model: `mistral-ocr-latest`.
 - Remote services
   - `enable_remote_services=True` is set by the pipeline option builders; required for Mistral API calls.
+
+## Cost tracking
+
+- Runtime usage from the Mistral OCR and picture-description adapters is collected by `extraction.mistral_cost_tracker.mistral_cost_tracker`.
+- Default pricing (October 2024 public list prices) is pre-configured for `pixtral-12b` and `mistral-ocr-latest`. Override them — or add more models — via the `MISTRAL_PRICE_OVERRIDES` environment variable. Example:
+
+```
+export MISTRAL_PRICE_OVERRIDES='{
+  "chat": {
+    "pixtral-12b": {
+      "input_usd_per_million": 1.8,
+      "output_usd_per_million": 5.4
+    }
+  },
+  "ocr": {
+    "mistral-ocr-latest": {"per_page_usd": 0.005}
+  }
+}'
+```
+
+- After each conversion `main.py` prints a human-readable summary with calls, tokens, pages processed, and estimated spend based on the provided pricing.
 
 ## Output
 

@@ -6,7 +6,7 @@ from extraction.adapter import MistralOcrOptions, MistralPictureDescriptionOptio
 def create_picture_description_options(api_key: str) -> MistralPictureDescriptionOptions: 
     return MistralPictureDescriptionOptions(
         api_key=api_key,
-        model="pixtral-12b-2409",
+        model="pixtral-12b",
         prompt="Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals.",
         temperature=0.2,
         max_output_tokens=300,

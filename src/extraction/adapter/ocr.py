@@ -14,6 +14,7 @@ from docling.utils.profiling import TimeRecorder
 from mistralai import Mistral, models
 
 from extraction.adapter.utils import _image_to_data_url
+from extraction.mistral_cost_tracker import mistral_cost_tracker
 
 
 _log = logging.getLogger(__name__)
@@ -120,6 +121,11 @@ class MistralOcrModel(BaseOcrModel):
                     self._available = False
                     yield page
                     continue
+                    
+                # Log usage for cost tracking
+                usage_info = getattr(resp, "usage_info", None)
+                pages_processed = getattr(usage_info, "pages_processed", None)
+                mistral_cost_tracker.record_ocr(self.model, pages_processed)
 
                 ocr_cells = self._to_docling_format(resp, page)
                 if ocr_cells:

@@ -17,6 +17,7 @@ from mistralai.types import UNSET, UNSET_SENTINEL
 from PIL import Image
 
 from extraction.adapter.utils import _image_to_data_url
+from extraction.mistral_cost_tracker import mistral_cost_tracker
 
 
 _log = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class MistralPictureDescriptionOptions(PictureDescriptionBaseOptions):
     kind: ClassVar[Literal["mistral_api"]] = "mistral_api"
 
     api_key: str
-    model: str = "pixtral-12b-2409"
+    model: str = "pixtral-12b"
     prompt: str = "Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals."
     temperature: float = 0.2
     max_output_tokens: int = 300
@@ -128,6 +129,10 @@ class MistralPictureDescriptionModel(PictureDescriptionBaseModel):
             except Exception as exc:  # pragma: no cover - shielding API errors
                 _log.warning("Mistral picture description failed: %s", exc)
                 return ""
+
+            mistral_cost_tracker.record_chat_completion(
+                self.options.model, getattr(response, "usage", None)
+            )
 
             content = response.choices[0].message.content
             if content in (UNSET, UNSET_SENTINEL) or content is None:
