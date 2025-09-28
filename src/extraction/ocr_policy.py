@@ -8,16 +8,6 @@ from pypdf import PdfReader
 class OcrPolicyDecider:
     """Decide whether to enable OCR for a given document path."""
 
-    IMAGE_SUFFIXES = {
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".tif",
-        ".tiff",
-        ".bmp",
-        ".gif",
-        ".webp",
-    }
 
     def __init__(self, *, sample_pages: int = 5, char_threshold: int = 200) -> None:
         self.sample_pages = sample_pages
@@ -27,8 +17,7 @@ class OcrPolicyDecider:
         suffix = Path(path).suffix.lower()
         if suffix == ".pdf":
             return self._should_ocr_pdf(path)
-        if suffix in self.IMAGE_SUFFIXES:
-            return True
+        # Non-PDF formats do not use this toggle; return False by default.
         return False
 
     def _should_ocr_pdf(self, path: str | Path) -> bool:
@@ -67,4 +56,3 @@ class OcrPolicyDecider:
 
 
 __all__ = ["OcrPolicyDecider"]
-
