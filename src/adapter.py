@@ -39,6 +39,7 @@ class MistralOcrOptions(OcrOptions):
     kind: ClassVar[Literal["mistral"]] = "mistral"
     api_key: str
     model: str = "mistral-ocr-latest"
+    lang: List[str] = ["auto"] # dont use for mistral
 
 class MistralOcrModel(BaseOcrModel):
     OPTIONS_CLASS = MistralOcrOptions
@@ -151,7 +152,7 @@ class MistralPictureDescriptionOptions(PictureDescriptionBaseOptions):
 
     api_key: str
     model: str = "pixtral-12b-2409"
-    prompt: str = "Describe this image in a few sentences."
+    prompt: str = "Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals."
     temperature: float = 0.2
     max_output_tokens: int = 300
     concurrency: int = 2
