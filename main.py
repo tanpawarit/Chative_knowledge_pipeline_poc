@@ -5,20 +5,27 @@ import warnings
 
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.pipeline_options import ConvertPipelineOptions, PdfPipelineOptions
+from docling_core.transforms.serializer.markdown import MarkdownDocSerializer, MarkdownParams
 
 # Make local adapters importable (src/adapter.py)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(CURRENT_DIR, "src")
 if SRC_DIR not in sys.path:
     sys.path.append(SRC_DIR)
- 
+
 from dotenv import load_dotenv  # type: ignore
 
-load_dotenv() 
-from adapter import MistralOcrOptions, register_mistral_ocr_plugin 
+load_dotenv()
+from adapter import (
+    MistralOcrOptions,
+    MistralPictureDescriptionOptions,
+    register_mistral_ocr_plugin,
+    register_mistral_picture_description_plugin,
+)
+from picture_serializer import CommentPictureSerializer
 
-from pypdf import PdfReader 
+from pypdf import PdfReader
 
 # Suppress benign RuntimeWarnings coming from Docling confidence aggregation
 # (e.g., "Mean of empty slice") when metrics are not applicable for a format.
@@ -37,7 +44,7 @@ def should_ocr_pdf(path: str | Path, *, sample_pages: int = 5, char_threshold: i
 
     If pypdf is unavailable or an error occurs, default to True (safer to OCR).
     """
-    try: 
+    try:
         reader = PdfReader(str(path))
         num_pages = len(reader.pages)
         if num_pages == 0:
@@ -68,7 +75,7 @@ if not mistral_key:
     )
 
 # Source can be a path or URL; we use local path for now
-source = "data/Develop Process_QuantLab.pptx"
+source = "data/2509.04343v1.pdf"
 
 # Decide OCR policy per file/format
 do_ocr = False
@@ -82,13 +89,33 @@ else:
     # Text-native formats (docx, pptx, html, md, csv) default to no OCR
     do_ocr = False
 
+picture_prompt = (
+    "Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals."
+)
+picture_options_pdf = MistralPictureDescriptionOptions(
+    api_key=mistral_key,
+    prompt=picture_prompt,
+    temperature=0.0,
+    concurrency=2,
+)
+
 opts = PdfPipelineOptions(
     do_ocr=do_ocr,
     allow_external_plugins=True,
+    enable_remote_services=True,
+    generate_picture_images=True,
+    images_scale=1.0,
+    do_picture_description=True,
+    picture_description_options=picture_options_pdf,
     ocr_options=MistralOcrOptions(api_key=mistral_key),
 )
 
-register_mistral_ocr_plugin(allow_external_plugins=opts.allow_external_plugins)
+register_mistral_ocr_plugin(
+    allow_external_plugins=opts.allow_external_plugins
+)
+register_mistral_picture_description_plugin(
+    allow_external_plugins=opts.allow_external_plugins
+)
 
 converter = DocumentConverter(
     allowed_formats=[
@@ -97,19 +124,33 @@ converter = DocumentConverter(
         InputFormat.DOCX,
         InputFormat.HTML,
         InputFormat.PPTX,
-        InputFormat.ASCIIDOC,
-        InputFormat.CSV,
-        InputFormat.MD,
+        # InputFormat.ASCIIDOC,
+        # InputFormat.CSV,
+        # InputFormat.MD,
     ],
     format_options={
         InputFormat.PDF: PdfFormatOption(pipeline_options=opts)
     },
 )
 
-print(f"OCR policy: do_ocr={do_ocr} for {source}")
-result = converter.convert(source)  
+pptx_option = converter.format_to_options.get(InputFormat.PPTX)
+if pptx_option is not None:
+    pptx_option.pipeline_options = ConvertPipelineOptions(
+        allow_external_plugins=True,
+        enable_remote_services=True,
+        do_picture_description=True,
+        picture_description_options=picture_options_pdf.model_copy(deep=True),
+    )
 
-markdown = result.document.export_to_markdown()
+print(f"OCR policy: do_ocr={do_ocr} for {source}")
+result = converter.convert(source)
+
+serializer = MarkdownDocSerializer(
+    doc=result.document,
+    picture_serializer=CommentPictureSerializer(),
+    params=MarkdownParams(),
+)
+markdown = serializer.serialize().text
 
 # Save markdown to file
 output_dir = Path("output")
