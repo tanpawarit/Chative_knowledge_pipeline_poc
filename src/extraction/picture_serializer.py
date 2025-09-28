@@ -42,3 +42,4 @@ class CommentPictureSerializer(MarkdownPictureSerializer):
 
         joined = (separator or "\n").join(parts)
         return create_ser_result(text=joined, span_source=item)
+

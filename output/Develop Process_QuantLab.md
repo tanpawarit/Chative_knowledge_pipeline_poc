@@ -1,6 +1,7 @@
-The image features a graphical representation with a dark blue background, overlaid with a series of vertical bars and interconnected nodes forming a network. Superimposed on this layout is a wavy line that peaks and troughs, suggesting a trend or data pattern. The visual elements are highlighted with shades of blue and purple, giving it a futuristic and technological appearance.
+The image displays a graphical representation with a dark blue background, featuring a prominent wavy line that fluctuates across the image. Surrounding the wavy line are vertical bars and interconnected nodes, creating a network-like structure. The text within the image includes numerical values and labels, likely representing data points or measurements.
 
 <!-- image -->
+<!-- image description: The image displays a graphical representation with a dark blue background, featuring a prominent wavy line that fluctuates across the image. Surrounding the wavy line are vertical bars and interconnected nodes, creating a network-like structure. The text within the image includes numerical values and labels, likely representing data points or measurements. -->
 
 BY 
 
@@ -50,6 +51,7 @@ Fail
 The image is a financial chart displaying stock prices over time, with two distinct sections labeled "Out of Sample Data" and "Good for In Sample Data." The "Out of Sample Data" section, located on the left, includes several annotations marked "WFA" and covers a period from 1999 to around 2010. The "Good for In Sample Data" section, on the right, spans from approximately 2010 to 2022 and shows more detailed price movements and trends. The chart uses red and green lines to indicate price changes, with a prominent blue background highlighting the "Good for In Sample Data" area.
 
 <!-- image -->
+<!-- image description: The image is a financial chart displaying stock prices over time, with two distinct sections labeled "Out of Sample Data" and "Good for In Sample Data." The "Out of Sample Data" section, located on the left, includes several annotations marked "WFA" and covers a period from 1999 to around 2010. The "Good for In Sample Data" section, on the right, spans from approximately 2010 to 2022 and shows more detailed price movements and trends. The chart uses red and green lines to indicate price changes, with a prominent blue background highlighting the "Good for In Sample Data" area. -->
 
 Data Usage
 
@@ -165,8 +167,9 @@ Final Out-of-Sample Strategy
 
 Monte Carlo WFA
 
-The image depicts a neatly arranged workspace with a white smartphone positioned at the top left corner, next to a white keyboard. To the right of the keyboard, there is a closed gray notebook with a black pen resting on top. At the bottom right, there is an open spiral-bound notebook with a pair of white earphones placed on it. The overall setting suggests a minimalist and organized work environment.
+The image depicts a neatly arranged workspace with various items on a white surface. Key objects include a smartphone, a wireless keyboard, a notebook with a pen resting on it, a pair of earphones, and a small notepad with a pen. The overall setting suggests a minimalist and organized environment, likely used for work or study.
 
 <!-- image -->
+<!-- image description: The image depicts a neatly arranged workspace with various items on a white surface. Key objects include a smartphone, a wireless keyboard, a notebook with a pen resting on it, a pair of earphones, and a small notepad with a pen. The overall setting suggests a minimalist and organized environment, likely used for work or study. -->
 
 Thank You

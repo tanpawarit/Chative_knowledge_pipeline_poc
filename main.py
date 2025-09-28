@@ -15,10 +15,9 @@ from docling.document_converter import (
     MarkdownFormatOption,
 )
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import ConvertPipelineOptions, PdfPipelineOptions
 from docling_core.transforms.serializer.markdown import MarkdownDocSerializer, MarkdownParams
 
-# Make local adapters importable (src/adapter.py)
+# Make local adapters importable (src/extraction/adapter)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(CURRENT_DIR, "src")
 if SRC_DIR not in sys.path:
@@ -27,82 +26,28 @@ if SRC_DIR not in sys.path:
 from dotenv import load_dotenv  # type: ignore
 
 load_dotenv()
-from adapter import (
-    MistralOcrOptions,
-    MistralPictureDescriptionOptions,
+from extraction.adapter import (
     register_mistral_ocr_plugin,
     register_mistral_picture_description_plugin,
 )
-from picture_serializer import CommentPictureSerializer
-
-from pypdf import PdfReader
+from extraction.option.pipeline_option import (
+    build_asciidoc_pipeline_options,
+    build_csv_pipeline_options,
+    build_docx_pipeline_options,
+    build_html_pipeline_options,
+    build_image_pipeline_options,
+    build_markdown_pipeline_options,
+    build_pdf_pipeline_options,
+    build_pptx_pipeline_options,
+)
+from extraction.picture_serializer import CommentPictureSerializer
+from extraction.ocr_policy import OcrPolicyDecider
 
 # Suppress benign RuntimeWarnings coming from Docling confidence aggregation
 # (e.g., "Mean of empty slice") when metrics are not applicable for a format.
 warnings.filterwarnings(
     "ignore", category=RuntimeWarning, message="Mean of empty slice"
 )
-
-class OcrPolicyDecider:
-    """Encapsulate heuristics for deciding when to run OCR."""
-
-    IMAGE_SUFFIXES = {
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".tif",
-        ".tiff",
-        ".bmp",
-        ".gif",
-        ".webp",
-    }
-
-    def __init__(self, *, sample_pages: int = 5, char_threshold: int = 200) -> None:
-        self.sample_pages = sample_pages
-        self.char_threshold = char_threshold
-
-    def should_ocr(self, path: str | Path) -> bool:
-        suffix = Path(path).suffix.lower()
-        if suffix == ".pdf":
-            return self._should_ocr_pdf(path)
-        if suffix in self.IMAGE_SUFFIXES:
-            return True
-        return False
-
-    def _should_ocr_pdf(self, path: str | Path) -> bool:
-        """
-        Decide whether to OCR a PDF based on presence of a text layer.
-
-        Heuristic:
-        - Read up to `sample_pages` from the start.
-        - If the average extracted characters per page < `char_threshold`,
-          consider it a scanned PDF and enable OCR.
-
-        If pypdf is unavailable or an error occurs, default to True (safer to OCR).
-        """
-        try:
-            reader = PdfReader(str(path))
-            num_pages = len(reader.pages)
-            if num_pages == 0:
-                return True
-            pages_to_check = min(self.sample_pages, num_pages)
-            total_chars = 0
-            checked = 0
-            for i in range(pages_to_check):
-                try:
-                    text = reader.pages[i].extract_text() or ""
-                except Exception:
-                    text = ""
-                total_chars += len(text.strip())
-                checked += 1
-            if checked == 0:
-                return True
-            avg_chars = total_chars / checked
-            return avg_chars < self.char_threshold
-        except Exception:
-            # On any unexpected error, err on the side of enabling OCR
-            return True
-
 
 mistral_key = os.getenv("MISTRAL_KEY")
 if not mistral_key:
@@ -111,57 +56,23 @@ if not mistral_key:
     )
 
 # Source can be a path or URL; we use local path for now
-source = "data/Cryptography.pdf"
+source = "data/Develop Process_QuantLab.pptx"
 
 # Decide OCR policy per file/format
 policy = OcrPolicyDecider()
 do_ocr = policy.should_ocr(source)
 
-# Shared factory helpers ensure each format gets a fresh options instance
-def make_picture_description_options() -> MistralPictureDescriptionOptions:
-    return MistralPictureDescriptionOptions(api_key=mistral_key)
-
-
-def make_remote_convert_options() -> ConvertPipelineOptions:
-    return ConvertPipelineOptions(
-        allow_external_plugins=True,
-        enable_remote_services=True,
-        do_picture_description=True,
-        picture_description_options=make_picture_description_options(),
-    )
-
-
-# Specific pipeline options for PDF
-pdf_pipeline_opts = PdfPipelineOptions(
+pdf_pipeline_opts = build_pdf_pipeline_options(
+    mistral_key,
     do_ocr=do_ocr,
-    allow_external_plugins=True,
-    enable_remote_services=True,
-    generate_picture_images=True,
-    images_scale=2.0,
-    do_picture_description=True,
-    picture_description_options=make_picture_description_options(),
-    ocr_options=MistralOcrOptions(api_key=mistral_key),
 )
-
-# Images go through the PDF pipeline machinery, so mirror the remote config
-image_pipeline_opts = PdfPipelineOptions(
-    do_ocr=True,
-    allow_external_plugins=True,
-    enable_remote_services=True,
-    generate_picture_images=True,
-    images_scale=2.0,
-    do_picture_description=True,
-    picture_description_options=make_picture_description_options(),
-    ocr_options=MistralOcrOptions(api_key=mistral_key),
-)
-
-# Specific pipeline options for document formats (no OCR, but remote picture captions)
-pptx_pipeline_opts = make_remote_convert_options()
-docx_pipeline_opts = make_remote_convert_options()
-html_pipeline_opts = make_remote_convert_options()
-asciidoc_pipeline_opts = make_remote_convert_options()
-csv_pipeline_opts = make_remote_convert_options()
-markdown_pipeline_opts = make_remote_convert_options()
+image_pipeline_opts = build_image_pipeline_options(mistral_key)
+pptx_pipeline_opts = build_pptx_pipeline_options(mistral_key)
+docx_pipeline_opts = build_docx_pipeline_options(mistral_key)
+html_pipeline_opts = build_html_pipeline_options(mistral_key)
+asciidoc_pipeline_opts = build_asciidoc_pipeline_options(mistral_key)
+csv_pipeline_opts = build_csv_pipeline_options(mistral_key)
+markdown_pipeline_opts = build_markdown_pipeline_options(mistral_key)
 
 register_mistral_ocr_plugin(
     allow_external_plugins=pdf_pipeline_opts.allow_external_plugins
