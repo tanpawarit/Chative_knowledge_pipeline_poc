@@ -3,14 +3,11 @@ from __future__ import annotations
 import logging
 import os
 
+from dotenv import load_dotenv  # type: ignore
+
+load_dotenv()
+
 _log = logging.getLogger(__name__)
-
-
-def _get_env(name: str, default: str) -> str:
-    value = os.getenv(name)
-    if value is None or value == "":
-        return default
-    return value
 
 
 def _get_float_env(name: str, default: float) -> float:
@@ -24,11 +21,10 @@ def _get_float_env(name: str, default: float) -> float:
         return default
 
 
-OCR_MODEL = _get_env("MISTRAL_OCR_MODEL", "mistral-ocr-latest")
-PICTURE_MODEL = _get_env("MISTRAL_PICTURE_MODEL", "pixtral-12b")
-PICTURE_PROMPT = _get_env(
-    "MISTRAL_PICTURE_PROMPT",
-    "Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals.",
+OCR_MODEL = os.getenv("MISTRAL_OCR_MODEL") or "mistral-ocr-latest"
+PICTURE_MODEL = os.getenv("MISTRAL_PICTURE_MODEL") or "pixtral-12b"
+PICTURE_PROMPT = os.getenv("MISTRAL_PICTURE_PROMPT") or (
+    "Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals."
 )
 
 OCR_COST_PER_PAGE = _get_float_env("MISTRAL_OCR_COST_PER_PAGE", 0.005)

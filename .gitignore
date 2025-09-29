@@ -65,7 +65,7 @@ dmypy.json
 .ipynb_checkpoints
 profile_default/
 ipython_config.py
-
+*.ipynb
 # Logs
 *.log
 
@@ -84,4 +84,4 @@ ipython_config.py
 
 # macOS
 .DS_Store
-
+ 
