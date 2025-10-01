@@ -9,14 +9,17 @@ The pipeline decides when to run OCR, enriches pictures with descriptions, and s
 
 ![Extraction Flow](asset/extraction_flow.png)
 
-# Chunking Module
-
-# Embedding Module
-
 ## Cite
 
 - Extraction: Deep Search Team (2024). Docling Technical Report. arXiv:2408.09869. https://doi.org/10.48550/arXiv.2408.09869
+
+# Chunking Module
+## Cite
 - Embedding baseline: Arora, Liang, Ma (2017). A Simple but Tough-to-Beat Baseline for Sentence Embeddings. https://openreview.net/pdf?id=SyK00v5xx
+
+# Embedding Module
+ 
+ 
 
 ```
 @techreport{Docling,
@@ -36,5 +39,21 @@ The pipeline decides when to run OCR, enriches pictures with descriptions, and s
   booktitle = {Proceedings of the International Conference on Learning Representations},
   year = {2017},
   url = {https://openreview.net/pdf?id=SyK00v5xx}
+}
+
+@software{pythainlp,
+    title = "{P}y{T}hai{NLP}: {T}hai Natural Language Processing in {P}ython",
+    author = "Phatthiyaphaibun, Wannaphong  and
+      Chaovavanich, Korakot  and
+      Polpanumas, Charin  and
+      Suriyawongkul, Arthit  and
+      Lowphansirikul, Lalita  and
+      Chormai, Pattarawat",
+    doi = {10.5281/zenodo.3519354},
+    license = {Apache-2.0},
+    month = jun,
+    url = {https://github.com/PyThaiNLP/pythainlp/},
+    version = {v5.0.4},
+    year = {2024},
 }
 ```
