@@ -155,12 +155,3 @@ def main_extraction(
     """Wrapper that returns the extracted Markdown string."""
     output_path = run_extraction(source, output_dir=output_dir)
     return output_path.read_text(encoding="utf-8")
-
-
-# def main(source: Optional[str] = None) -> None:
-#     default_source = "data/Screenshot 2568-07-18 at 12.10.26.png"
-#     main_extraction(source or default_source)
-
-
-# if __name__ == "__main__":
-#     main()

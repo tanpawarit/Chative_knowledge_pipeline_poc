@@ -19,7 +19,7 @@ The chunking pipeline is optimized for cost, speed, token-size control, and Thai
 
 **Highlights**
 - Cost/latency friendly: avoids double-embedding. Sentences are embedded once and chunk vectors are computed via weighted mean.
-- Token-accurate sizing: uses `TokenTextSplitter` + `tiktoken` to enforce `MAX_TOKENS` and `OVERLAP_TOKENS` precisely.
+- Character-based sizing: configurable via environment settings to control minimum semantic chunk length.
 - Thai-aware sentence splitting: leverages PyThaiNLP for Thai text and a lightweight regex splitter for general text.
 - Structure-preserving: starts from `MarkdownHeaderTextSplitter` to keep H1/H2/H3 metadata with each chunk.
  
