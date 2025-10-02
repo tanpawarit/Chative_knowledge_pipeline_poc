@@ -1,8 +1,9 @@
 """Embedding utilities and configuration."""
 
 from .config import EmbeddingSettings
+from .dense import embed_chunks
 from .gemini import GeminiEmbedder, GeminiEmbeddings
-from .main import embed_chunks, main_embedding
+from .main import main_embedding
 
 __all__ = [
     "EmbeddingSettings",

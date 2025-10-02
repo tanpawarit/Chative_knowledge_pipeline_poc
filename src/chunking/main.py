@@ -22,5 +22,4 @@ def main_chunking(
         markdown,
         source=source,
         settings=use_settings,
-        include_dense_vectors=False,
     )

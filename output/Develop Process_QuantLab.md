@@ -1,7 +1,7 @@
-The image features a graphical representation with a dark blue background, overlaid with a series of vertical bars and interconnected nodes forming a network. Superimposed on this layout is a wavy line that peaks and troughs, indicating fluctuations, with highlighted points along the wave. The visual elements suggest a focus on data analysis or network performance metrics.
+The image displays a graphical representation with a dark blue background, featuring a prominent wavy line that fluctuates across the image. This line intersects with vertical bars of varying heights, which are labeled with numerical values. The overall design suggests a data visualization or financial chart, emphasizing trends and variations over time.
 
 <!-- image -->
-<!-- image description: The image features a graphical representation with a dark blue background, overlaid with a series of vertical bars and interconnected nodes forming a network. Superimposed on this layout is a wavy line that peaks and troughs, indicating fluctuations, with highlighted points along the wave. The visual elements suggest a focus on data analysis or network performance metrics. -->
+<!-- image description: The image displays a graphical representation with a dark blue background, featuring a prominent wavy line that fluctuates across the image. This line intersects with vertical bars of varying heights, which are labeled with numerical values. The overall design suggests a data visualization or financial chart, emphasizing trends and variations over time. -->
 
 BY 
 
@@ -48,10 +48,10 @@ Fail
 
 Fail
 
-The image is a financial chart displaying stock prices over time, with two distinct sections labeled "Out of Sample Data" and "Good for In Sample Data." The "Out of Sample Data" section, located on the left, includes several annotations marked "WFA" and spans from 1999 to around 2010. The "Good for In Sample Data" section, on the right, covers from approximately 2010 to 2022 and shows more detailed price movements and trends. The chart uses red and green lines to represent price changes, with a prominent blue arrow indicating the transition between the two data sections.
+The image is a financial chart displaying stock prices over time, with two distinct regions marked: "Out of Sample Data" on the left and "Good for In Sample Data" on the right. The chart includes annotations labeled "WFA" in the "Out of Sample Data" section and highlights the price movements with red and green lines, indicating trends and fluctuations in the stock prices.
 
 <!-- image -->
-<!-- image description: The image is a financial chart displaying stock prices over time, with two distinct sections labeled "Out of Sample Data" and "Good for In Sample Data." The "Out of Sample Data" section, located on the left, includes several annotations marked "WFA" and spans from 1999 to around 2010. The "Good for In Sample Data" section, on the right, covers from approximately 2010 to 2022 and shows more detailed price movements and trends. The chart uses red and green lines to represent price changes, with a prominent blue arrow indicating the transition between the two data sections. -->
+<!-- image description: The image is a financial chart displaying stock prices over time, with two distinct regions marked: "Out of Sample Data" on the left and "Good for In Sample Data" on the right. The chart includes annotations labeled "WFA" in the "Out of Sample Data" section and highlights the price movements with red and green lines, indicating trends and fluctuations in the stock prices. -->
 
 Data Usage
 
@@ -167,9 +167,9 @@ Final Out-of-Sample Strategy
 
 Monte Carlo WFA
 
-The image displays a neatly arranged workspace with a white smartphone, a wireless keyboard, a closed notebook, a pen, a pair of white earphones, and a spiral-bound notepad. The items are organized on a clean, white surface, suggesting a minimalist and professional setting.
+The image displays a neatly arranged workspace with a white smartphone, a wireless keyboard, a closed notebook, a pen, a pair of earphones, and a spiral-bound notepad. The items are organized on a white surface, suggesting a minimalist and clean environment, likely set up for productivity or study.
 
 <!-- image -->
-<!-- image description: The image displays a neatly arranged workspace with a white smartphone, a wireless keyboard, a closed notebook, a pen, a pair of white earphones, and a spiral-bound notepad. The items are organized on a clean, white surface, suggesting a minimalist and professional setting. -->
+<!-- image description: The image displays a neatly arranged workspace with a white smartphone, a wireless keyboard, a closed notebook, a pen, a pair of earphones, and a spiral-bound notepad. The items are organized on a white surface, suggesting a minimalist and clean environment, likely set up for productivity or study. -->
 
 Thank You
