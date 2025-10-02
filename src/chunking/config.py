@@ -18,6 +18,11 @@ class Settings:
     overlap_chars: int = int(os.getenv("OVERLAP_CHARS", 300))
     cohesion_drop: float = float(os.getenv("COHESION_DROP", 0.12))
 
+    # token-based sizing via TokenTextSplitter
+    max_tokens_per_subchunk: int = int(os.getenv("MAX_TOKENS", 750))
+    overlap_tokens: int = int(os.getenv("OVERLAP_TOKENS", 150))
+    token_encoding_name: str = os.getenv("TOKEN_ENCODING", "cl100k_base")
+
     # batch size for API calls
     batch_size: int = int(os.getenv("BATCH_SIZE", 128))
 

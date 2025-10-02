@@ -1,101 +1,80 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
+from langchain_text_splitters import TokenTextSplitter
 
 from src.chunking.cache import DiskVectorCache
 from src.chunking.config import Settings
 from src.chunking.embed_gemini import GeminiEmbedder
 from src.chunking.splitter import split_by_markdown
-from src.chunking.utils import make_chunk_id, char_len, cosine, sentence_split, weighted_mean
+from src.chunking.utils import make_chunk_id, sentence_split, token_len, weighted_mean
 
-def semantic_subchunking(settings: Settings, long_text: str,
-                         embedder: GeminiEmbedder, cache: DiskVectorCache) -> List[Dict[str, Any]]:
-    '''Break a long passage into semantically coherent sub-chunks backed by embeddings.
-
-    The text is sentence-tokenised, each sentence vector is resolved through the provided
-    cache/embedder pair, and the function grows chunks greedily while tracking a
-    character-weighted centroid. Growth stops when the next sentence would breach the
-    ``max_chars_per_subchunk`` limit or reduce cosine cohesion beyond ``cohesion_drop`` once
-    the current chunk has at least ``min_chars_per_subchunk`` characters. Each emitted
-    sub-chunk carries the aggregated text and a weighted mean embedding; optional backward
-    overlap is controlled by ``overlap_chars``.
+def token_part_vectorization(settings: Settings, long_text: str,
+                             embedder: GeminiEmbedder, cache: DiskVectorCache) -> List[Dict[str, Any]]:
     '''
-    sents = sentence_split(long_text)
-    if not sents:
-        return [{"text": long_text, "vector": None}]
+    Not semantic chunking, but semantic pooling for vectors.
 
-    # Embed sentences with cache (pay once per sentence)
-    vecs: List[np.ndarray] = []
-    need: List[str] = []
-    idx_map: List[int] = []
+    - Chunking: done by TokenTextSplitter (token-limited parts). This decides boundaries.
+    - Semantics: per-part sentence splitting solely to build vectors via
+      sentence-level embeddings + token-weighted mean pooling.
+    '''
+    # Stage 1: enforce token-limited parts; semantic pooling happens per part below
+    splitter = TokenTextSplitter(
+        chunk_size=settings.max_tokens_per_subchunk,
+        chunk_overlap=settings.overlap_tokens,
+        encoding_name=settings.token_encoding_name,
+    )
+    parts = splitter.split_text(long_text)
+    if not parts:
+        # Fallback: nothing to split → keep original text as a single part
+        parts = [long_text]
 
-    for i, s in enumerate(sents):
-        v = cache.get(s)
-        if v is None:
-            need.append(s)
-            idx_map.append(i)
-            vecs.append(None)  # placeholder
-        else:
-            vecs.append(v)
-
-    if need:
-        new_vecs = embedder.embed_batch(need)
-        for k, v in enumerate(new_vecs):
-            pos = idx_map[k]
-            vecs[pos] = v
-            cache.set(sents[pos], v)
-
-    sent_chars = [char_len(s) for s in sents]
-
-    # Greedy build with cohesion drop + length ceiling, with overlap
     subs: List[Dict[str, Any]] = []
-    cur_idx = 0
-    while cur_idx < len(sents):
-        acc_text: List[str] = []
-        acc_vecs: List[np.ndarray] = []
-        acc_chars = 0
-        centroid = None
-        i = cur_idx
-        while i < len(sents):
-            cand_t, cand_v, cand_c = sents[i], vecs[i], sent_chars[i]
-            if not acc_vecs:
-                acc_text.append(cand_t); acc_vecs.append(cand_v)
-                acc_chars += cand_c; centroid = cand_v.copy(); i += 1; continue
 
-            new_centroid = weighted_mean(
-                acc_vecs + [cand_v],
-                [char_len(t) for t in acc_text] + [cand_c]
-            )
-            sim_before = cosine(centroid, cand_v)
-            sim_after  = cosine(new_centroid, cand_v)
-            drop = sim_before - sim_after
+    for part in parts:
+        # Stage 2: sentence-level split used only for pooling, not for boundaries
+        sents = sentence_split(part)
+        if not sents:
+            subs.append({"text": part.strip(), "vector": None})
+            continue
 
-            will_exceed = (acc_chars + cand_c) > settings.max_chars_per_subchunk
-            enough_len  = acc_chars >= settings.min_chars_per_subchunk
-            semantic_cut = (drop > settings.cohesion_drop) and enough_len
+        vecs: List[Optional[np.ndarray]] = [None] * len(sents)
+        need: List[str] = []
+        idx_map: List[int] = []
 
-            if will_exceed or semantic_cut:
-                break
+        # Resolve sentence vectors from cache; collect the ones we still need to embed
+        for i, sent in enumerate(sents):
+            cached = cache.get(sent)
+            if cached is None:
+                need.append(sent)
+                idx_map.append(i)
+            else:
+                vecs[i] = cached
 
-            acc_text.append(cand_t); acc_vecs.append(cand_v)
-            acc_chars += cand_c; centroid = new_centroid; i += 1
+        if need:
+            new_vecs = embedder.embed_batch(need)
+            for pos, vec in zip(idx_map, new_vecs):
+                vecs[pos] = vec
+                cache.set(sents[pos], vec)
 
-        sc_text = " ".join(acc_text).strip()
-        sc_vec  = weighted_mean(acc_vecs, [char_len(t) for t in acc_text])
-        subs.append({"text": sc_text, "vector": sc_vec})
-
-        if settings.overlap_chars > 0 and i < len(sents):
-            back = i - 1; overlap = 0
-            while back >= cur_idx and overlap < settings.overlap_chars:
-                overlap += sent_chars[back]; back -= 1
-            cur_idx = max(back + 1, i)
+        # Weight by token counts to align pooling with model token budget
+        weights = [token_len(s, settings.token_encoding_name) for s in sents]
+        resolved = [(v, w) for v, w in zip(vecs, weights) if v is not None]
+        if resolved:
+            res_vecs, res_weights = zip(*resolved)
+            mean_vec = weighted_mean(list(res_vecs), list(res_weights))
         else:
-            cur_idx = i
+            mean_vec = np.array([], dtype=np.float32)
+        subs.append({
+            "text": part.strip(),
+            "vector": mean_vec if mean_vec.size else None,
+        })
 
     return subs
 
 
 def run_pipeline(md_text: str, source: str, settings: Settings) -> List[Dict[str, Any]]:
+    # 1) Split by Markdown headers to preserve document structure
     base_chunks = split_by_markdown(md_text)
     cache = DiskVectorCache(settings.cache_dir)
     embedder = GeminiEmbedder(settings)
@@ -105,18 +84,19 @@ def run_pipeline(md_text: str, source: str, settings: Settings) -> List[Dict[str
     idx_map: List[int] = []
 
     for ch in base_chunks:
-        n = char_len(ch["text"])
-        if n > settings.max_chars_per_subchunk:
-            subs = semantic_subchunking(settings, ch["text"], embedder, cache) 
+        n_tokens = token_len(ch["text"], settings.token_encoding_name)
+        # Long chunks → token-limited parts + sentence-level semantic pooling for vectors
+        if n_tokens > settings.max_tokens_per_subchunk:
+            subs = token_part_vectorization(settings, ch["text"], embedder, cache) 
             for s in subs:
                 results.append({
                     "id": make_chunk_id(s["text"]),
                     "text": s["text"],
                     "vector": s["vector"].tolist() if s["vector"] is not None else None,
-                    "meta": ch["meta"] | {"parent_type": "semantic_subchunk", "source": source},
-                })
-                print(results)
+                    "meta": ch["meta"] | {"parent_type": "token_part", "source": source},
+                }) 
         else:
+            # Short chunks → defer and batch-process sentence embeddings below
             ready_texts.append(ch["text"])
             idx_map.append(len(results))
             results.append({
@@ -126,12 +106,12 @@ def run_pipeline(md_text: str, source: str, settings: Settings) -> List[Dict[str
                 "meta": ch["meta"] | {"parent_type": "header_chunk", "source": source},
             })
 
-    # For the short chunks: embed sentences once, then weighted mean per chunk
+    # For the short chunks: embed sentences once, then weighted-mean per chunk
     if ready_texts:
-        # sentence-level cache+embed
+        # Sentence-level cache+embed (batch)
         sent_lists = [sentence_split(t) for t in ready_texts]
         flat: List[str] = []
-        owners: List[int] = []  # map flat index → which chunk
+        owners: List[int] = []  # map flat index → which chunk (kept for clarity)
         for ci, sents in enumerate(sent_lists):
             for s in sents:
                 flat.append(s)
@@ -140,7 +120,7 @@ def run_pipeline(md_text: str, source: str, settings: Settings) -> List[Dict[str
         cache = DiskVectorCache(settings.cache_dir)
         embedder = GeminiEmbedder(settings)
 
-        # resolve cache
+        # Resolve cache first; only embed sentences not seen before
         vecs: List[np.ndarray] = [None] * len(flat)
         need: List[str] = []
         posmap: List[int] = []
@@ -158,12 +138,12 @@ def run_pipeline(md_text: str, source: str, settings: Settings) -> List[Dict[str
                 vecs[i] = v
                 cache.set(flat[i], v)
 
-        # aggregate back per chunk
+        # Aggregate back per chunk via token-weighted mean of sentence vectors
         start = 0
         for chunk_idx, sents in enumerate(sent_lists):
             end = start + len(sents)
             s_vecs = vecs[start:end]
-            weights = [char_len(s) for s in sents]
+            weights = [token_len(s, settings.token_encoding_name) for s in sents]
             mean_vec = weighted_mean(s_vecs, weights) if s_vecs else np.array([], dtype=np.float32)
             results_idx = idx_map[chunk_idx]
             results[results_idx]["vector"] = mean_vec.tolist() if mean_vec.size else None

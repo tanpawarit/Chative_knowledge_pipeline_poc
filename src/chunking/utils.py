@@ -1,17 +1,16 @@
 import hashlib
 import json
-import numpy as np
 import re
-from typing import List
+from typing import Dict, List
+
+import numpy as np
+import tiktoken
 # import pycrfsuite
 from pythainlp.tokenize import sent_tokenize as thai_sent_tokenize 
 
 
 def make_chunk_id(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
- 
-def char_len(s: str) -> int:
-    return len(s)
 
 def cosine(a: np.ndarray, b: np.ndarray) -> float:
     na = np.linalg.norm(a)
@@ -27,6 +26,17 @@ def weighted_mean(vectors: List[np.ndarray], weights: List[float]) -> np.ndarray
     w = np.array(weights, dtype=np.float32)
     v = np.vstack(vectors)
     return (v * (w[:, None] / (w.sum() + 1e-9))).sum(axis=0)
+
+
+_ENCODER_CACHE: Dict[str, "tiktoken.Encoding"] = {}
+
+
+def token_len(text: str, encoding_name: str) -> int:
+    enc = _ENCODER_CACHE.get(encoding_name)
+    if enc is None:
+        enc = tiktoken.get_encoding(encoding_name)
+        _ENCODER_CACHE[encoding_name] = enc
+    return len(enc.encode(text))
   
 
 def sentence_split(text: str, *, prefer_thai: bool = True) -> List[str]: 

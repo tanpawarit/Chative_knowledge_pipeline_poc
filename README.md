@@ -14,6 +14,15 @@ The pipeline decides when to run OCR, enriches pictures with descriptions, and s
 - Extraction: Deep Search Team (2024). Docling Technical Report. arXiv:2408.09869. https://doi.org/10.48550/arXiv.2408.09869
 
 # Chunking Module
+
+The chunking pipeline is optimized for cost, speed, token-size control, and Thai-language support.
+
+**Highlights**
+- Cost/latency friendly: avoids double-embedding. Sentences are embedded once and chunk vectors are computed via weighted mean.
+- Token-accurate sizing: uses `TokenTextSplitter` + `tiktoken` to enforce `MAX_TOKENS` and `OVERLAP_TOKENS` precisely.
+- Thai-aware sentence splitting: leverages PyThaiNLP for Thai text and a lightweight regex splitter for general text.
+- Structure-preserving: starts from `MarkdownHeaderTextSplitter` to keep H1/H2/H3 metadata with each chunk.
+ 
 ## Cite
 - Embedding baseline: Arora, Liang, Ma (2017). A Simple but Tough-to-Beat Baseline for Sentence Embeddings. https://openreview.net/pdf?id=SyK00v5xx
 
