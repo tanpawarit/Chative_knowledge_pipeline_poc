@@ -20,14 +20,6 @@ def cosine(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / (na * nb))
 
 
-def weighted_mean(vectors: List[np.ndarray], weights: List[float]) -> np.ndarray:
-    if not vectors:
-        return np.array([], dtype=np.float32)
-    w = np.array(weights, dtype=np.float32)
-    v = np.vstack(vectors)
-    return (v * (w[:, None] / (w.sum() + 1e-9))).sum(axis=0)
-
-
 _ENCODER_CACHE: Dict[str, "tiktoken.Encoding"] = {}
 
 

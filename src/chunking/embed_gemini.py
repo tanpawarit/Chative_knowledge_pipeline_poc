@@ -10,6 +10,8 @@ from typing import List
 import google.generativeai as genai
 import numpy as np
 
+from langchain_core.embeddings import Embeddings
+
 from src.chunking.config import Settings
 
 
@@ -33,3 +35,20 @@ class GeminiEmbedder:
                 resp = genai.embed_content(model=self.model, content=item)
                 out.append(np.array(resp["embedding"], dtype=np.float32))
         return out
+
+
+class GeminiEmbeddings(Embeddings):
+    """LangChain-compatible embedding wrapper around `GeminiEmbedder`."""
+
+    def __init__(self, embedder: GeminiEmbedder):
+        self._embedder = embedder
+
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        vectors = self._embedder.embed_batch(texts)
+        return [vec.tolist() for vec in vectors]
+
+
+    def embed_query(self, text: str) -> List[float]:
+        doc_vecs = self.embed_documents([text])
+        return doc_vecs[0] if doc_vecs else []
