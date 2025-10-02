@@ -3,13 +3,13 @@ from typing import Any, Dict, List
 from langchain_core.documents import Document
 from langchain_experimental.text_splitter import SemanticChunker
 
-from src.chunking.config import Settings
-from src.chunking.embed_gemini import GeminiEmbedder, GeminiEmbeddings
+from src.chunking.config import ChunkingSettings
 from src.chunking.splitter import split_by_markdown
 from src.chunking.utils import make_chunk_id
+from src.embedding.gemini import GeminiEmbedder, GeminiEmbeddings
 
 
-def _build_semantic_chunker(settings: Settings, embedder: GeminiEmbedder) -> SemanticChunker:
+def _build_semantic_chunker(settings: ChunkingSettings, embedder: GeminiEmbedder) -> SemanticChunker:
     chunker_kwargs: Dict[str, Any] = {
         "buffer_size": max(1, settings.semantic_buffer_size),
         "breakpoint_threshold_type": settings.semantic_breakpoint_type,
@@ -24,12 +24,18 @@ def _build_semantic_chunker(settings: Settings, embedder: GeminiEmbedder) -> Sem
     return SemanticChunker(GeminiEmbeddings(embedder), **chunker_kwargs)
 
 
-def run_pipeline(md_text: str, source: str, settings: Settings) -> List[Dict[str, Any]]:
+def run_pipeline(
+    md_text: str,
+    source: str,
+    settings: ChunkingSettings,
+    *,
+    include_vectors: bool = True,
+) -> List[Dict[str, Any]]:
     base_chunks = split_by_markdown(md_text)
     if not base_chunks:
         return []
 
-    gemini_embedder = GeminiEmbedder(settings)
+    gemini_embedder = GeminiEmbedder(settings.embedding)
     semantic_chunker = _build_semantic_chunker(settings, gemini_embedder)
 
     semantic_docs: List[Document] = []
@@ -89,24 +95,31 @@ def run_pipeline(md_text: str, source: str, settings: Settings) -> List[Dict[str
                     "semantic_chunk_total": total,
                 }
             )
-            semantic_docs.append(Document(page_content=doc.page_content, metadata=metadata))
+            semantic_docs.append(
+                Document(page_content=doc.page_content, metadata=metadata)
+            )
 
     if not semantic_docs:
         return []
 
-    vectors = gemini_embedder.embed_batch([doc.page_content for doc in semantic_docs])
-    if len(vectors) != len(semantic_docs):
-        raise RuntimeError("Gemini embedding count mismatch with semantic chunks")
+    vectors: List[List[float]] = []
+    if include_vectors:
+        raw_vectors = gemini_embedder.embed_batch(
+            [doc.page_content for doc in semantic_docs]
+        )
+        if len(raw_vectors) != len(semantic_docs):
+            raise RuntimeError("Gemini embedding count mismatch with semantic chunks")
+        vectors = [vec.tolist() for vec in raw_vectors]
 
     results: List[Dict[str, Any]] = []
-    for doc, vec in zip(semantic_docs, vectors):
-        results.append(
-            {
-                "id": make_chunk_id(doc.page_content),
-                "text": doc.page_content,
-                "vector": vec.tolist(),
-                "meta": doc.metadata,
-            }
-        )
+    for index, doc in enumerate(semantic_docs):
+        chunk_entry: Dict[str, Any] = {
+            "id": make_chunk_id(doc.page_content),
+            "text": doc.page_content,
+            "meta": doc.metadata,
+        }
+        if include_vectors:
+            chunk_entry["vector"] = vectors[index]
+        results.append(chunk_entry)
 
     return results

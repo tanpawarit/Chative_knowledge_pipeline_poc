@@ -1,10 +1,10 @@
- 
 from __future__ import annotations
 
 import os
 import sys
 import warnings
 from pathlib import Path
+from typing import Optional
 
 from docling.document_converter import (
     AsciiDocFormatOption,
@@ -48,8 +48,12 @@ from extraction.pipeline_option import (
 from extraction.picture_serializer import CommentPictureSerializer
 
 
-def main() -> None:
-    """Run the document conversion pipeline."""
+def run_extraction(
+    source: str,
+    *,
+    output_dir: Optional[Path] = None,
+) -> Path:
+    """Convert a document into Markdown and return the written file path."""
     load_dotenv()
 
     # Suppress benign RuntimeWarnings coming from Docling confidence aggregation
@@ -67,9 +71,6 @@ def main() -> None:
     # Reset usage tracking for a fresh run and apply any runtime pricing overrides.
     mistral_cost_tracker.reset()
     mistral_cost_tracker.configure_from_environment()
-
-    # Source can be a path or URL; we use local path for now
-    source = "data/Screenshot 2568-07-18 at 12.10.26.png"
 
     # Decide OCR policy per file/format
     policy = OcrPolicyDecider()
@@ -133,17 +134,33 @@ def main() -> None:
     )
     markdown = serializer.serialize().text
 
-    # Save markdown to file
-    output_dir = Path("output")
+    output_dir = output_dir or Path("output")
     output_dir.mkdir(parents=True, exist_ok=True)
-    doc_filename = Path(source).stem
-    with (output_dir / f"{doc_filename}.md").open("w", encoding="utf-8") as fp:
+    output_path = output_dir / f"{Path(source).stem}.md"
+    with output_path.open("w", encoding="utf-8") as fp:
         fp.write(markdown)
 
-    print(f"Saved markdown to {output_dir / f'{doc_filename}.md'}")
+    print(f"Saved markdown to {output_path}")
     print(f"Mean_grade: {result.confidence.mean_grade.value}")
     print(mistral_cost_tracker.format_report())
 
+    return output_path
 
-if __name__ == "__main__":
-    main()
+
+def main_extraction(
+    source: str,
+    *,
+    output_dir: Optional[Path] = None,
+) -> str:
+    """Wrapper that returns the extracted Markdown string."""
+    output_path = run_extraction(source, output_dir=output_dir)
+    return output_path.read_text(encoding="utf-8")
+
+
+# def main(source: Optional[str] = None) -> None:
+#     default_source = "data/Screenshot 2568-07-18 at 12.10.26.png"
+#     main_extraction(source or default_source)
+
+
+# if __name__ == "__main__":
+#     main()
