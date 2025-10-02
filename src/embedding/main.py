@@ -21,12 +21,12 @@ def embed_chunks(
     embedder = GeminiEmbedder(settings)
 
     texts = [chunk.get("text", "") for chunk in chunk_list]
-    vectors = embedder.embed_batch(texts)
-    if len(vectors) != len(chunk_list):
+    dense_vectors = embedder.embed_batch(texts)
+    if len(dense_vectors) != len(chunk_list):
         raise RuntimeError("Gemini embedding count mismatch with chunks")
 
-    for chunk, vec in zip(chunk_list, vectors):
-        chunk["vector"] = vec.tolist()
+    for chunk, vec in zip(chunk_list, dense_vectors):
+        chunk["dense_vector"] = vec.tolist()
 
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)

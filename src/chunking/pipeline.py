@@ -29,7 +29,7 @@ def run_pipeline(
     source: str,
     settings: ChunkingSettings,
     *,
-    include_vectors: bool = True,
+    include_dense_vectors: bool = True,
 ) -> List[Dict[str, Any]]:
     base_chunks = split_by_markdown(md_text)
     if not base_chunks:
@@ -102,14 +102,14 @@ def run_pipeline(
     if not semantic_docs:
         return []
 
-    vectors: List[List[float]] = []
-    if include_vectors:
+    dense_vectors: List[List[float]] = []
+    if include_dense_vectors:
         raw_vectors = gemini_embedder.embed_batch(
             [doc.page_content for doc in semantic_docs]
         )
         if len(raw_vectors) != len(semantic_docs):
             raise RuntimeError("Gemini embedding count mismatch with semantic chunks")
-        vectors = [vec.tolist() for vec in raw_vectors]
+        dense_vectors = [vec.tolist() for vec in raw_vectors]
 
     results: List[Dict[str, Any]] = []
     for index, doc in enumerate(semantic_docs):
@@ -118,8 +118,8 @@ def run_pipeline(
             "text": doc.page_content,
             "meta": doc.metadata,
         }
-        if include_vectors:
-            chunk_entry["vector"] = vectors[index]
+        if include_dense_vectors:
+            chunk_entry["dense_vector"] = dense_vectors[index]
         results.append(chunk_entry)
 
     return results
