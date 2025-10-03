@@ -9,9 +9,17 @@ The pipeline decides when to run OCR, enriches pictures with descriptions, and s
 
 ![Extraction Flow](asset/extraction_flow.png)
  
-
 # Chunking Module
- 
+
+This module converts Markdown into retrieval-ready chunks using a two-stage strategy:
+
+- Markdown-aware pre-split: preserves `H1/H2/H3`, with adaptive sub-splitting for long sections.
+- Semantic split: Gemini-powered `SemanticChunker` finds natural boundaries; tiny pieces are merged to meet a minimum size.
+
+Outputs stable `id`, `text`, and rich `meta` (headers, source, indices) for each chunk.
+
+![Chunking Flow](asset/chunking_flow.png)
+
 # Embedding Module
  
  
