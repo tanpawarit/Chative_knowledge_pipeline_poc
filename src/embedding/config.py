@@ -18,7 +18,7 @@ class MilvusSettings:
     # The value here is the partition key value to write on each row (e.g., tenant/workspace id).
     partition_key_value: str = os.getenv("MILVUS_PARTITION_KEY", "")
     dense_metric: str = os.getenv("MILVUS_DENSE_METRIC", "COSINE")
-    sparse_metric: str = os.getenv("MILVUS_SPARSE_METRIC", "BM25")
+    sparse_metric: str = os.getenv("MILVUS_SPARSE_METRIC", "IP")
     consistency_level: str = os.getenv("MILVUS_CONSISTENCY_LEVEL", "Bounded")
 
 

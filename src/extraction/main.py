@@ -4,7 +4,6 @@ import os
 import sys
 import warnings
 from pathlib import Path
-from typing import Optional
 
 from docling.document_converter import (
     AsciiDocFormatOption,
@@ -48,12 +47,8 @@ from extraction.pipeline_option import (
 from extraction.picture_serializer import CommentPictureSerializer
 
 
-def run_extraction(
-    source: str,
-    *,
-    output_dir: Optional[Path] = None,
-) -> Path:
-    """Convert a document into Markdown and return the written file path."""
+def run_extraction(source: str) -> str:
+    """Convert a document into Markdown and return the serialized text."""
     load_dotenv()
 
     # Suppress benign RuntimeWarnings coming from Docling confidence aggregation
@@ -134,24 +129,12 @@ def run_extraction(
     )
     markdown = serializer.serialize().text
 
-    output_dir = output_dir or Path("output")
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{Path(source).stem}.md"
-    with output_path.open("w", encoding="utf-8") as fp:
-        fp.write(markdown)
-
-    print(f"Saved markdown to {output_path}")
     print(f"Mean_grade: {result.confidence.mean_grade.value}")
     print(mistral_cost_tracker.format_report())
 
-    return output_path
+    return markdown
 
 
-def main_extraction(
-    source: str,
-    *,
-    output_dir: Optional[Path] = None,
-) -> str:
+def main_extraction(source: str) -> str:
     """Wrapper that returns the extracted Markdown string."""
-    output_path = run_extraction(source, output_dir=output_dir)
-    return output_path.read_text(encoding="utf-8")
+    return run_extraction(source)

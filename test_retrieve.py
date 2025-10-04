@@ -48,8 +48,8 @@ def dense_request(query: str, topk: int, *, settings: Optional[EmbeddingSettings
     )
 
 
-def sparse_request(query: str, topk: int, *, metric: str = "BM25") -> AnnSearchRequest:
-    # For BM25, Milvus accepts raw text as the request data.
+def sparse_request(query: str, topk: int, *, metric: str = "IP") -> AnnSearchRequest:
+    # Milvus accepts raw text for sparse queries; metric is controlled by the collection config.
     return AnnSearchRequest(
         data=[query],
         anns_field="sparse_vector",
@@ -72,7 +72,8 @@ def run_dense(client: MilvusClient, collection: str, q: str, topk: int) -> List[
 
 
 def run_sparse(client: MilvusClient, collection: str, q: str, topk: int) -> List[dict]:
-    req = sparse_request(q, topk)
+    settings = EmbeddingSettings()
+    req = sparse_request(q, topk, metric=settings.milvus.sparse_metric)
     res = client.search(
         collection_name=collection,
         data=req.data,

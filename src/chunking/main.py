@@ -14,12 +14,20 @@ def main_chunking(
     markdown: str,
     *,
     source: str = "inline",
+    doc_name: str,
+    doc_hash: str,
     settings: Optional[ChunkingSettings] = None,
 ) -> List[Dict[str, Any]]:
-    """Chunk Markdown into semantic segments without embeddings."""
+    """Chunk Markdown into semantic segments without embeddings.
+
+    Callers must provide both `doc_name` and `doc_hash`; they are forwarded to
+    the pipeline without modification.
+    """
     use_settings = settings or ChunkingSettings()
     return run_pipeline(
         markdown,
         source=source,
         settings=use_settings,
+        doc_name=doc_name,
+        doc_hash=doc_hash,
     )
