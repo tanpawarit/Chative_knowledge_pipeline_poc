@@ -37,7 +37,7 @@ def run_pipeline(
     return embedded_chunks
 
 
-def main(source: str = "data/Develop Process_QuantLab.pptx") -> None:
+def main(source: str = "data/Screenshot 2568-07-18 at 12.10.26.png") -> None:
     embedded = run_pipeline(source)
     print(f"Pipeline complete. Embedded {len(embedded)} chunks.")
     print(embedded[0] if embedded else "No chunks embedded.")

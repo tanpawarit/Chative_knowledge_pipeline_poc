@@ -25,6 +25,12 @@ class CommentPictureSerializer(MarkdownPictureSerializer):
         separator: Optional[str] = None,
         **kwargs: Any,
     ) -> SerializationResult:
+        # Skip the default annotation rendering to avoid duplicating the
+        # generated description text. We'll re-inject the pieces we need below
+        # via HTML comments.
+        kwargs = dict(kwargs)
+        kwargs["include_annotations"] = False
+
         base_result = super().serialize(
             item=item,
             doc_serializer=doc_serializer,
@@ -42,4 +48,3 @@ class CommentPictureSerializer(MarkdownPictureSerializer):
 
         joined = (separator or "\n").join(parts)
         return create_ser_result(text=joined, span_source=item)
-

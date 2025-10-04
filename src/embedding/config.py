@@ -14,6 +14,9 @@ class MilvusSettings:
     username: str = os.getenv("MILVUS_USERNAME", "")
     password: str = os.getenv("MILVUS_PASSWORD", "")
     collection_name: str = os.getenv("MILVUS_COLLECTION", "")
+    # If set, enables partition-key routing using a dedicated field in the schema.
+    # The value here is the partition key value to write on each row (e.g., tenant/workspace id).
+    partition_key_value: str = os.getenv("MILVUS_PARTITION_KEY", "")
     dense_metric: str = os.getenv("MILVUS_DENSE_METRIC", "COSINE")
     sparse_metric: str = os.getenv("MILVUS_SPARSE_METRIC", "BM25")
     consistency_level: str = os.getenv("MILVUS_CONSISTENCY_LEVEL", "Bounded")
