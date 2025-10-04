@@ -21,9 +21,7 @@ class MilvusStore:
         if token:
             client_kwargs["token"] = token
         self._client = MilvusClient(**client_kwargs)
-        self._collection = self._settings.collection_name
-        # Name of the partition-key field in the schema when enabled.
-        # We keep the field name stable and use the value from MILVUS_PARTITION_KEY.
+        self._collection = self._settings.collection_name 
         self._pk_field = "workspace_id"
         self._initialized = False
 
@@ -53,6 +51,48 @@ class MilvusStore:
         )
         self._initialized = True
 
+    def document_exists(
+        self,
+        *,
+        doc_name: str,
+        doc_hash: str,
+        workspace_id: Optional[str] = None,
+    ) -> bool:
+        """Return True when a document with matching identifiers is already stored."""
+
+        workspace = (workspace_id or self._settings.partition_key_value or "").strip()
+        if not workspace:
+            return False
+        if not doc_name or not doc_hash:
+            return False
+
+        try:
+            if not self._client.has_collection(collection_name=self._collection):
+                return False
+        except Exception:
+            return False
+
+        filter_expr = self._and_filters(
+            self._eq_expr(self._pk_field, workspace),
+            self._eq_expr("doc_hash", doc_hash),
+            self._eq_expr("doc_name", doc_name),
+        )
+        if not filter_expr:
+            return False
+
+        try:
+            hits = self._client.query(
+                collection_name=self._collection,
+                filter=filter_expr,
+                output_fields=["id"],
+                limit=1,
+                consistency_level=self._settings.consistency_level,
+            )
+        except Exception:
+            return False
+
+        return bool(hits)
+
     def _build_schema(self, dense_dim: int):
         schema = self._client.create_schema(auto_id=False, enable_dynamic_fields=False)
         schema.add_field(
@@ -65,6 +105,7 @@ class MilvusStore:
             field_name=self._pk_field,
             datatype=DataType.VARCHAR,
             max_length=64,
+            is_partition_key=True,
         )
         schema.add_field(
             field_name="doc_hash",
@@ -137,13 +178,32 @@ class MilvusStore:
         return index_params
 
     def _validate_collection(self, dense_dim: int) -> None:
+        """Validate an existing collection without being brittle to SDK variants.
+
+        Different pymilvus client versions return slightly different shapes for
+        describe_collection(). This method normalizes those shapes so we don't
+        incorrectly report that fields are missing when they are present.
+        """
         try:
             info = self._client.describe_collection(collection_name=self._collection)
         except Exception:
+            # If we can't describe, don't block collection usage.
             return
 
-        fields: Iterable[Dict[str, Any]] = info.get("schema", {}).get("fields", [])
-        field_names = {f.get("name") for f in fields}
+        # Normalize where fields are located and how their names are keyed.
+        schema: Dict[str, Any] = info.get("schema", {}) or {}
+        raw_fields: Iterable[Dict[str, Any]] = (
+            schema.get("fields")
+            or schema.get("field_schemas")
+            or info.get("fields")
+            or []
+        )
+
+        def field_name(f: Dict[str, Any]) -> Optional[str]:
+            return f.get("name") or f.get("field_name") or f.get("fieldName")
+
+        fields: List[Dict[str, Any]] = list(raw_fields)
+        field_names = {n for n in (field_name(f) for f in fields) if n}
         required = {
             "id",
             self._pk_field,
@@ -165,23 +225,43 @@ class MilvusStore:
                 + ", ".join(missing)
             )
 
-        dense_field = next((f for f in fields if f.get("name") == "dense_vector"), None)
+        def get_params(f: Dict[str, Any]) -> Dict[str, Any]:
+            return f.get("params") or f.get("type_params") or {}
+
+        dense_field = next((f for f in fields if field_name(f) == "dense_vector"), None)
         if dense_field:
-            params = dense_field.get("params", {})
-            existing = params.get("dim") or params.get("max_length")
+            params = get_params(dense_field)
+            # Some SDKs return dim under "dim", others under "dimension".
+            existing = params.get("dim") or params.get("dimension") or params.get("max_length")
             if existing is not None and int(existing) != dense_dim:
                 raise RuntimeError(
                     "Existing Milvus collection 'dense_vector' dimension "
                     f"{existing} does not match expected {dense_dim}"
                 )
 
-        functions: Iterable[Dict[str, Any]] = info.get("schema", {}).get("functions", [])
-        has_bm25 = any(func.get("name") == BM25_FUNCTION_NAME for func in functions)
-        if not has_bm25:
-            raise RuntimeError(
-                "Existing Milvus collection is missing the BM25 function required for "
-                "sparse indexing. Drop the collection or enable the function before continuing."
+        # BM25 function inspection isn't available in all client variants; only
+        # enforce when the data is present in the response.
+        functions: Iterable[Dict[str, Any]] = schema.get("functions", [])
+        if isinstance(functions, list) and functions:
+            has_bm25 = any(func.get("name") == BM25_FUNCTION_NAME for func in functions)
+            if not has_bm25:
+                raise RuntimeError(
+                    "Existing Milvus collection is missing the BM25 function required for "
+                    "sparse indexing. Drop the collection or enable the function before continuing."
+                )
+
+        partition_field = next((f for f in fields if field_name(f) == self._pk_field), None)
+        if partition_field is not None:
+            is_pk = (
+                partition_field.get("is_partition_key")
+                or partition_field.get("isPartitionKey")
+                or False
             )
+            if not is_pk:
+                raise RuntimeError(
+                    "Existing Milvus collection does not have the workspace_id field configured "
+                    "as a partition key. Drop the collection or recreate it with partition keys enabled."
+                )
 
     def upsert(self, rows: Iterable[Dict[str, Any]]) -> None:
         prepared = self._prepare_rows(rows)
