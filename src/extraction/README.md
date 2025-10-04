@@ -99,7 +99,7 @@ markdown = serializer.serialize().text
 
 ## Cost tracking
 
-- Runtime usage from the Mistral OCR and picture-description adapters is collected by `extraction.mistral_cost_tracker.mistral_cost_tracker`.
+- Runtime usage from the Mistral OCR and picture-description adapters is collected by `cost_tracker.mistral_cost_tracker.mistral_cost_tracker`.
 - Configure the adapters and their pricing through environment variables (see `.env`):
   - `MISTRAL_OCR_MODEL`, `MISTRAL_PICTURE_MODEL`, `MISTRAL_PICTURE_PROMPT` control the SDK calls.
   - `MISTRAL_OCR_COST_PER_PAGE`, `MISTRAL_PICTURE_INPUT_COST_PER_MILLION`, `MISTRAL_PICTURE_OUTPUT_COST_PER_MILLION` feed the default cost estimates.

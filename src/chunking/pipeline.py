@@ -82,7 +82,11 @@ def run_pipeline(
     - The embedding stage expects `doc_hash`, `doc_name`, `chunk_index`, and
       `total_chunks` to be present (either at top level or in `meta`).
     """
-    base_chunks = split_by_markdown(md_text)
+    base_chunks = split_by_markdown(
+        md_text,
+        chunk_size=settings.presplit_min_chars,
+        chunk_overlap=settings.presplit_overlap_chars,
+    )
     if not base_chunks:
         return []
 

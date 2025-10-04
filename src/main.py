@@ -82,7 +82,7 @@ def run_pipeline(
     return embedded_chunks
 
 
-def main(source: str = "data/2509.04343v1.pdf") -> None:
+def main(source: str = "data/Develop Process_QuantLab.pptx") -> None:
     source_path = Path(source)
     if not source_path.exists():
         raise FileNotFoundError(f"Source file not found: {source}")

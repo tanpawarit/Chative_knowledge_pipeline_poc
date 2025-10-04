@@ -1,42 +1,19 @@
-from __future__ import annotations
-
-import logging
-import os
-
-from dotenv import load_dotenv  # type: ignore
-
-load_dotenv()
-
-_log = logging.getLogger(__name__)
+from src.config import ExtractionSettings
 
 
-def _get_float_env(name: str, default: float) -> float:
-    value = os.getenv(name)
-    if value is None or value.strip() == "":
-        return default
-    try:
-        return float(value)
-    except ValueError:  # pragma: no cover - defensive parsing
-        _log.warning("Invalid float for %s: %s", name, value)
-        return default
+settings = ExtractionSettings()
 
-
-OCR_MODEL = os.getenv("MISTRAL_OCR_MODEL") or "mistral-ocr-latest"
-PICTURE_MODEL = os.getenv("MISTRAL_PICTURE_MODEL") or "pixtral-12b"
-PICTURE_PROMPT = os.getenv("MISTRAL_PICTURE_PROMPT") or (
-    "Summarize the picture in 2-3 sentences, capturing layout, text, and key visuals."
-)
-
-OCR_COST_PER_PAGE = _get_float_env("MISTRAL_OCR_COST_PER_PAGE", 0.005)
-PICTURE_INPUT_COST_PER_MILLION = _get_float_env(
-    "MISTRAL_PICTURE_INPUT_COST_PER_MILLION", 1.8
-)
-PICTURE_OUTPUT_COST_PER_MILLION = _get_float_env(
-    "MISTRAL_PICTURE_OUTPUT_COST_PER_MILLION", 5.4
-)
+OCR_MODEL = settings.ocr_model
+PICTURE_MODEL = settings.picture_model
+PICTURE_PROMPT = settings.picture_prompt
+OCR_COST_PER_PAGE = settings.ocr_cost_per_page
+PICTURE_INPUT_COST_PER_MILLION = settings.picture_input_cost_per_million
+PICTURE_OUTPUT_COST_PER_MILLION = settings.picture_output_cost_per_million
 
 
 __all__ = [
+    "ExtractionSettings",
+    "settings",
     "OCR_MODEL",
     "PICTURE_MODEL",
     "PICTURE_PROMPT",

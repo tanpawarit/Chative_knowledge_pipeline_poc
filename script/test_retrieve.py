@@ -14,7 +14,13 @@ Usage examples:
   python retrieve.py "trading setup" dense
 """
 
+import sys
+from pathlib import Path
 from typing import List, Optional
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from dotenv import dotenv_values
 from pymilvus import MilvusClient
@@ -111,7 +117,7 @@ def run_hybrid(
 def main() -> None:
     # Simple hardcoded demo values
     q = "financial chart design"
-    mode = "dense"  # choose from: dense | sparse | hybrid
+    mode = "sparse"  # choose from: dense | sparse | hybrid
     topk = 5
     w_dense = 0.5
     w_sparse = 0.5

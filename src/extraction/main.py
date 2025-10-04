@@ -32,7 +32,7 @@ from extraction.adapter import (
     register_mistral_ocr_plugin,
     register_mistral_picture_description_plugin,
 )
-from extraction.mistral_cost_tracker import mistral_cost_tracker
+from cost_tracker.mistral_cost_tracker import mistral_cost_tracker
 from extraction.ocr_policy import OcrPolicyDecider
 from extraction.pipeline_option import (
     build_asciidoc_pipeline_options,

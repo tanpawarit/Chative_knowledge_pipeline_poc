@@ -15,7 +15,7 @@ from mistralai import Mistral, models
 
 from extraction.adapter.utils import _image_to_data_url
 from extraction.config import OCR_MODEL
-from extraction.mistral_cost_tracker import mistral_cost_tracker
+from cost_tracker.mistral_cost_tracker import mistral_cost_tracker
 
 
 _log = logging.getLogger(__name__)

@@ -20,7 +20,16 @@ Outputs stable `id`, `text`, and rich `meta` (headers, source, indices) for each
 
 ![Chunking Flow](asset/chunking_flow.png)
 
-# Embedding Module
+# Embedding and Load Module
+
+Purpose
+- Add dense embeddings to chunks using Gemini and load them into Milvus with hybrid (dense + BM25 sparse) indexing.
+- Enforce simple dedup and upsert rules by `workspace_id`, `doc_hash`, and `doc_name`.
  
- 
- 
+- Upsert rules (per workspace):
+  - New content, new name → insert
+  - Same content, new name → insert
+  - New content, same name → delete old by name, then insert
+  - Same content, same name → no‑op
+  
+![Embedding and Load Flow](asset/embed_load_flow.png)
