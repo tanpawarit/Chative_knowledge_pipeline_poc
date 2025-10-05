@@ -85,6 +85,9 @@ class EmbeddingSettings:
     model: str = field(default_factory=lambda: _str_env("GEMINI_EMBED_MODEL", "models/text-embedding-004"))
     batch_size: int = field(default_factory=lambda: _int_env("BATCH_SIZE", 128))
     milvus: MilvusSettings = field(default_factory=MilvusSettings)
+    embed_price_per_million_tokens: Optional[float] = field(
+        default_factory=lambda: _optional_float_env("GEMINI_EMBED_USD_PER_MILLION")
+    )
 
     def ensure_api_key(self) -> str:
         if not self.api_key:

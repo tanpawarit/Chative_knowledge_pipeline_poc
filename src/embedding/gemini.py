@@ -4,8 +4,12 @@ from typing import List
 import google.generativeai as genai
 import numpy as np
 from langchain_core.embeddings import Embeddings
-
-from .config import EmbeddingSettings
+ 
+from src.config import EmbeddingSettings
+from cost_tracker.gemini_cost_tracker import (
+    EmbeddingPricing,
+    gemini_cost_tracker,
+)
 
 # Quiet noisy gRPC warnings about ALTS credentials when running outside GCP.
 os.environ.setdefault("GRPC_VERBOSITY", "NONE")
@@ -18,6 +22,15 @@ class GeminiEmbedder:
         genai.configure(api_key=settings.ensure_api_key())
         self.model = settings.model
         self.batch_size = settings.batch_size
+        self.cost_tracker = gemini_cost_tracker
+
+        # Allow per-run pricing overrides via the embedding settings.
+        override_price = getattr(settings, "embed_price_per_million_tokens", None)
+        if override_price:
+            self.cost_tracker.configure_pricing(
+                self.model,
+                EmbeddingPricing(usd_per_million_tokens=float(override_price)),
+            )
 
 
     def embed_batch(self, texts: List[str]) -> List[np.ndarray]:
@@ -30,7 +43,14 @@ class GeminiEmbedder:
             batch = texts[i : i + B]
             for item in batch:
                 resp = genai.embed_content(model=self.model, content=item)
-                out.append(np.array(resp["embedding"], dtype=np.float32))
+                embedding = resp["embedding"]
+                out.append(np.array(embedding, dtype=np.float32))
+
+                self.cost_tracker.record_embedding(
+                    self.model,
+                    response_usage=resp,
+                    text=item,
+                )
         return out
 
 

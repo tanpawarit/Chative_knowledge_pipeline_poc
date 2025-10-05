@@ -82,7 +82,7 @@ def run_pipeline(
     return embedded_chunks
 
 
-def main(source: str = "data/Develop Process_QuantLab.pptx") -> None:
+def main(source: str = "data/Screenshot 2568-07-18 at 12.10.26 copy 2.png") -> None:
     source_path = Path(source)
     if not source_path.exists():
         raise FileNotFoundError(f"Source file not found: {source}")
@@ -94,9 +94,7 @@ def main(source: str = "data/Develop Process_QuantLab.pptx") -> None:
         raise RuntimeError(f"Unable to read source file for hashing: {source}") from exc
 
     embedded = run_pipeline(source, doc_name=doc_name, doc_hash=doc_hash)
-    print(f"Pipeline complete. Embedded {len(embedded)} chunks.")
-    print(embedded[0] if embedded else "No chunks embedded.")
-
+    print(f"Pipeline complete. Embedded {len(embedded)} chunks.") 
 
 if __name__ == "__main__":
     main()
