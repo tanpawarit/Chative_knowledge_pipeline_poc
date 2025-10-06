@@ -8,11 +8,7 @@ from typing import Dict, Iterable, Iterator, List, Optional, Set
 
 from pymilvus import MilvusClient
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.embedding.config import MilvusSettings
+from src.shared.config import MilvusSettings
 
 
 @dataclass

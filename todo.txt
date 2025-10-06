@@ -1,2 +1,2 @@
 [] connect with R2 storage
-[] add gemini cost tracker
+[] implement log eg.structlog

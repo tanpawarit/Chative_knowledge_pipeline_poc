@@ -16,7 +16,7 @@ Usage examples:
 
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -26,8 +26,8 @@ from dotenv import dotenv_values
 from pymilvus import MilvusClient
 from pymilvus.client.abstract import AnnSearchRequest, WeightedRanker
 
-from src.embedding.config import EmbeddingSettings
-from src.embedding.gemini import GeminiEmbedder
+from src.shared.config import EmbeddingSettings
+from src.knowledge_embedding.infrastructure.gemini_client import GeminiEmbedder
 
 
 def build_client_from_env() -> MilvusClient:
@@ -42,8 +42,7 @@ def build_client_from_env() -> MilvusClient:
     return MilvusClient(**kwargs)
 
 
-def dense_request(query: str, topk: int, *, settings: Optional[EmbeddingSettings] = None) -> AnnSearchRequest:
-    settings = settings or EmbeddingSettings()
+def dense_request(query: str, topk: int, *, settings: EmbeddingSettings) -> AnnSearchRequest:
     embedder = GeminiEmbedder(settings)
     vec = embedder.embed_batch([query])[0].tolist()
     return AnnSearchRequest(
@@ -64,8 +63,15 @@ def sparse_request(query: str, topk: int, *, metric: str = "IP") -> AnnSearchReq
     )
 
 
-def run_dense(client: MilvusClient, collection: str, q: str, topk: int) -> List[dict]:
-    req = dense_request(q, topk)
+def run_dense(
+    client: MilvusClient,
+    collection: str,
+    q: str,
+    topk: int,
+    *,
+    settings: EmbeddingSettings,
+) -> List[dict]:
+    req = dense_request(q, topk, settings=settings)
     res = client.search(
         collection_name=collection,
         data=req.data,
@@ -77,8 +83,14 @@ def run_dense(client: MilvusClient, collection: str, q: str, topk: int) -> List[
     return res[0]
 
 
-def run_sparse(client: MilvusClient, collection: str, q: str, topk: int) -> List[dict]:
-    settings = EmbeddingSettings()
+def run_sparse(
+    client: MilvusClient,
+    collection: str,
+    q: str,
+    topk: int,
+    *,
+    settings: EmbeddingSettings,
+) -> List[dict]:
     req = sparse_request(q, topk, metric=settings.milvus.sparse_metric)
     res = client.search(
         collection_name=collection,
@@ -98,8 +110,9 @@ def run_hybrid(
     topk: int,
     w_dense: float,
     w_sparse: float,
+    *,
+    settings: EmbeddingSettings,
 ) -> List[dict]:
-    settings = EmbeddingSettings()
     req_d = dense_request(q, topk, settings=settings)
     req_s = sparse_request(q, topk, metric=settings.milvus.sparse_metric)
 
@@ -129,12 +142,22 @@ def main() -> None:
 
     client = build_client_from_env()
 
+    embed_settings = EmbeddingSettings()
+
     if mode == "dense":
-        hits = run_dense(client, collection, q, topk)
+        hits = run_dense(client, collection, q, topk, settings=embed_settings)
     elif mode == "sparse":
-        hits = run_sparse(client, collection, q, topk)
+        hits = run_sparse(client, collection, q, topk, settings=embed_settings)
     else:
-        hits = run_hybrid(client, collection, q, topk, w_dense, w_sparse)
+        hits = run_hybrid(
+            client,
+            collection,
+            q,
+            topk,
+            w_dense,
+            w_sparse,
+            settings=embed_settings,
+        )
 
     for i, h in enumerate(hits, 1):
         text = (h.get("entity", {}).get("text") or "").splitlines()[0][:120]
