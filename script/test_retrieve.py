@@ -4,7 +4,7 @@ from __future__ import annotations
 Simple retrieval script against the Milvus collection configured in .env.
 
 Supports three modes:
-  - dense: semantic search with the Gemini embedding of the query
+  - dense: semantic search with the OpenAI embedding of the query
   - sparse: BM25 keyword search over the `text` field
   - hybrid: combine both with a weighted ranker
 
@@ -27,7 +27,7 @@ from pymilvus import MilvusClient
 from pymilvus.client.abstract import AnnSearchRequest, WeightedRanker
 
 from src.shared.config import EmbeddingSettings
-from src.knowledge_embedding.infrastructure.gemini_client import GeminiEmbedder
+from src.knowledge_embedding.infrastructure.openai_client import OpenAIEmbedder
 
 
 def build_client_from_env() -> MilvusClient:
@@ -43,7 +43,7 @@ def build_client_from_env() -> MilvusClient:
 
 
 def dense_request(query: str, topk: int, *, settings: EmbeddingSettings) -> AnnSearchRequest:
-    embedder = GeminiEmbedder(settings)
+    embedder = OpenAIEmbedder(settings)
     vec = embedder.embed_batch([query])[0].tolist()
     return AnnSearchRequest(
         data=[vec],

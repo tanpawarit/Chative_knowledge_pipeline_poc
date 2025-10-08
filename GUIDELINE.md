@@ -7,7 +7,7 @@ This repository is a proof-of-concept knowledge ingestion pipeline. It extracts 
 High-level flow:
 - Document Extraction: Docling-based conversion enriched with OCR and picture descriptions.
 - Chunking: Markdown-aware pre-splitting followed by semantic splitting/merging.
-- Embedding: Gemini embeddings applied to chunks.
+- Embedding: OpenAI and Gemini embeddings applied to chunks.
 - Storage: Upsert into Milvus with dense + BM25-sparse indexing.
 
 ## Project Structure
@@ -39,14 +39,14 @@ High-level flow:
 │   │       ├── markdown_splitter.py
 │   │       └── semantic_chunker.py
 │   │
-│   ├── knowledge_embedding/        # Embeds chunks with Gemini
+│   ├── knowledge_embedding/        # Embeds chunks with OpenAI
 │   │   ├── application/
 │   │   │   └── embed_pipeline.py
 │   │   ├── domain/
 │   │   │   ├── models.py
 │   │   │   └── services.py
 │   │   └── infrastructure/
-│   │       └── gemini_client.py
+│   │       └── openai_client.py
 │   │
 │   ├── knowledge_store/            # Storage and upsert logic (Milvus + BM25)
 │   │   ├── application/
@@ -58,6 +58,7 @@ High-level flow:
 │   ├── cost_management/
 │   │   └── infrastructure/
 │   │       ├── gemini_cost_tracker.py
+│   │       ├── openai_cost_tracker.py
 │   │       └── mistral_cost_tracker.py
 │   │
 │   └── shared/                     # Cross-cutting helpers
@@ -97,9 +98,8 @@ High-level flow:
 
 ### 2. Configure Environment
 - Copy `.env` and fill required keys (see Configuration section).
-- Minimal run requires at least `GEMINI_API_KEY` to embed; Milvus settings are only needed for upsert.
+- Minimal run requires at least `OPENAI_API_KEY` to embed; Milvus settings are only needed for upsert.
 
 ### 3. Run the Pipeline
 - Quick start: `python main.py` (uses default sample under `data/`).
 - To choose a file: edit `main(source=...)` or run `python -c "import main; main.main('data/your.pdf')"`.
-

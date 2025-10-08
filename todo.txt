@@ -1,2 +1,1 @@
-[] connect with R2 storage
 [] implement log eg.structlog

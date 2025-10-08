@@ -50,6 +50,25 @@ def _optional_float_env(key: str) -> Optional[float]:
         return None
 
 
+def _embedding_api_key_default() -> str:
+    return _str_env("OPENAI_API_KEY") or _str_env("GEMINI_API_KEY")
+
+
+def _embedding_model_default() -> str:
+    return (
+        _str_env("OPENAI_EMBED_MODEL")
+        or _str_env("GEMINI_EMBED_MODEL")
+        or "text-embedding-3-small"
+    )
+
+
+def _embedding_price_override_default() -> Optional[float]:
+    override = _optional_float_env("OPENAI_EMBED_USD_PER_MILLION")
+    if override is None:
+        override = _optional_float_env("GEMINI_EMBED_USD_PER_MILLION")
+    return override
+
+
 @dataclass
 class MilvusSettings:
     uri: str = field(default_factory=lambda: _str_env("MILVUS_ADDR"))
@@ -81,18 +100,22 @@ class MilvusSettings:
 
 @dataclass
 class EmbeddingSettings:
-    api_key: str = field(default_factory=lambda: _str_env("GEMINI_API_KEY"))
-    model: str = field(default_factory=lambda: _str_env("GEMINI_EMBED_MODEL", "models/text-embedding-004"))
+    api_key: str = field(default_factory=_embedding_api_key_default)
+    model: str = field(default_factory=_embedding_model_default)
     batch_size: int = field(default_factory=lambda: _int_env("BATCH_SIZE", 128))
     milvus: MilvusSettings = field(default_factory=MilvusSettings)
     embed_price_per_million_tokens: Optional[float] = field(
-        default_factory=lambda: _optional_float_env("GEMINI_EMBED_USD_PER_MILLION")
+        default_factory=_embedding_price_override_default
     )
 
     def ensure_api_key(self) -> str:
-        if not self.api_key:
-            raise RuntimeError("GEMINI_API_KEY is required")
-        return self.api_key
+        if self.api_key:
+            return self.api_key
+        fallback = _embedding_api_key_default()
+        if fallback:
+            self.api_key = fallback
+            return fallback
+        raise RuntimeError("OPENAI_API_KEY is required for embedding calls")
 
 
 @dataclass

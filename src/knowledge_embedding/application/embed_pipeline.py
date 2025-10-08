@@ -11,10 +11,10 @@ from src.knowledge_embedding.domain.services import (
     finalize_embeddings,
     prepare_embedding_inputs,
 )
-from src.knowledge_embedding.infrastructure.gemini_client import GeminiEmbedder
-from src.cost_management.infrastructure.gemini_cost_tracker import (
-    gemini_cost_tracker,
+from src.cost_management.infrastructure.openai_cost_tracker import (
+    openai_cost_tracker,
 )
+from src.knowledge_embedding.infrastructure.openai_client import OpenAIEmbedder
 from src.shared.config import EmbeddingSettings
 
 
@@ -54,13 +54,13 @@ def embed_chunks(
     if not chunk_list:
         return []
 
-    gemini_cost_tracker.reset()
-    gemini_cost_tracker.configure_from_environment()
+    openai_cost_tracker.reset()
+    openai_cost_tracker.configure_from_environment()
 
     inputs = prepare_embedding_inputs(chunk_list)
     texts = [item.text for item in inputs]
 
-    embedder = GeminiEmbedder(settings)
+    embedder = OpenAIEmbedder(settings)
     dense_vectors = [vec.tolist() for vec in embedder.embed_batch(texts)]
     now_ms = int(time.time() * 1000)
     records: List[ChunkEmbeddingRecord] = finalize_embeddings(
@@ -69,7 +69,7 @@ def embed_chunks(
         updated_at=now_ms,
     )
 
-    print(gemini_cost_tracker.format_report())
+    print(openai_cost_tracker.format_report())
     return [record.to_dict() for record in records]
 
 

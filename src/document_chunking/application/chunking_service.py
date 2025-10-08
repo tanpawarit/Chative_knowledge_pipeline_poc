@@ -17,16 +17,16 @@ from src.document_chunking.infrastructure.markdown_splitter import (
 from src.document_chunking.infrastructure.semantic_chunker import (
     SemanticChunkerAdapter,
 )
-from src.knowledge_embedding.infrastructure.gemini_client import (
-    GeminiEmbedder,
-    GeminiEmbeddings,
+from src.knowledge_embedding.infrastructure.openai_client import (
+    OpenAIEmbedder,
+    OpenAIEmbeddings,
 )
 from src.shared.config import ChunkingSettings
 
 
 def _default_embeddings(settings: ChunkingSettings) -> Embeddings:
-    embedder = GeminiEmbedder(settings.embedding)
-    return GeminiEmbeddings(embedder)
+    embedder = OpenAIEmbedder(settings.embedding)
+    return OpenAIEmbeddings(embedder)
 
 
 def generate_document_chunks(
