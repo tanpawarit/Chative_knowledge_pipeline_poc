@@ -70,10 +70,7 @@ ipython_config.py
 *.log
 
 # dotenv
-.env
-.env.*
-*.env
-*.env.*
+.env 
 
 # Editors / IDE
 .vscode/
@@ -84,5 +81,6 @@ ipython_config.py
 
 # macOS
 .DS_Store
- 
-chunks.jsonl
+  
+# testfiles
+testfiles/

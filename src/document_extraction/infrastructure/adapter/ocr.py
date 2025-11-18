@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import ClassVar, Iterable, List, Literal, Optional, Type
 
@@ -15,12 +14,13 @@ from mistralai import Mistral, models
 
 from src.document_extraction.infrastructure.adapter.utils import _image_to_data_url
 from src.document_extraction.infrastructure.config import OCR_MODEL
-from src.cost_management.infrastructure.mistral_cost_tracker import (
+from src.shared.cost_management.mistral_cost_tracker import (
     mistral_cost_tracker,
 )
+from src.shared.logging.logger import get_logger
 
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class MistralOcrOptions(OcrOptions):
@@ -120,7 +120,9 @@ class MistralOcrModel(BaseOcrModel):
                     )
                 except Exception as exc:  # pragma: no cover - surface SDK failures without crashing pipeline
                     if self._available:
-                        _log.warning("Mistral OCR request failed: %s", exc)
+                        _log.warning(
+                            "Mistral OCR request failed", error=str(exc)
+                        )
                     self._available = False
                     yield page
                     continue

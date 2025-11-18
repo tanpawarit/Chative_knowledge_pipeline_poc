@@ -11,13 +11,13 @@ class DocumentMetadata:
     """Document-level metadata required for downstream stages."""
 
     doc_name: str
-    doc_hash: str
+    document_id: str
     source: str
 
     def as_dict(self) -> Dict[str, Any]:
         return {
             "doc_name": self.doc_name,
-            "doc_hash": self.doc_hash,
+            "document_id": self.document_id,
             "source": self.source,
         }
 
@@ -51,7 +51,7 @@ class DocumentChunk:
             "chunk_index": self.chunk_index,
             "total_chunks": self.total_chunks,
             "doc_name": base.get("doc_name"),
-            "doc_hash": base.get("doc_hash"),
+            "document_id": base.get("document_id"),
         }
 
 

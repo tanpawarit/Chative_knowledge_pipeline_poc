@@ -1,4 +1,4 @@
-from src.shared.config import ExtractionSettings
+from src.shared.config.config import ExtractionSettings
 
 
 settings = ExtractionSettings()

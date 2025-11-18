@@ -24,7 +24,7 @@ Outputs stable `id`, `text`, and rich `meta` (headers, source, indices) for each
 
 Purpose
 - Add dense embeddings to chunks using OpenAI and load them into Milvus with hybrid (dense + BM25 sparse) indexing.
-- Enforce simple dedup and upsert rules by `workspace_id`, `doc_hash`, and `doc_name`.
+- Enforce simple dedup and upsert rules by `workspace_id`, `document_id`, and `doc_name`.
  
 - Upsert rules (per workspace):
   - New content, new name → insert
@@ -32,7 +32,7 @@ Purpose
   - New content, same name → delete old by name, then insert
   - Same content, same name → no‑op
   
-- Knowledge embedding leverages the OpenAI client in `src/knowledge_embedding/infrastructure/openai_client.py` and normalizes chunk metadata via `src/knowledge_embedding/domain/services.py`.
-- Milvus adapters live in `src/knowledge_store/infrastructure/milvus_store.py` with hybrid (dense + BM25 sparse) indexing for downstream retrieval.
+- Knowledge embedding uses a single OpenAI embedding client (see `src/shared/embeddings/`) and normalizes chunk metadata via `src/document_embedding/domain/services.py`.
+- Milvus adapters live in `src/document_store/infrastructure/milvus_store.py` with hybrid (dense + BM25 sparse) indexing for downstream retrieval.
 
 ![Embedding and Load Flow](asset/embed_load_flow.png)

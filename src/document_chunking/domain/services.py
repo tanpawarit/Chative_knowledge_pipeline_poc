@@ -96,7 +96,7 @@ def build_document_chunks(
         chunk.chunk_index = index
         chunk.total_chunks = total_chunks
         chunk.metadata.setdefault("doc_name", document.doc_name)
-        chunk.metadata.setdefault("doc_hash", document.doc_hash)
+        chunk.metadata.setdefault("document_id", document.document_id)
         chunk.metadata.setdefault("chunk_index", index)
         chunk.metadata.setdefault("chunk_total", total_chunks)
         chunk.metadata.setdefault("source", document.source)

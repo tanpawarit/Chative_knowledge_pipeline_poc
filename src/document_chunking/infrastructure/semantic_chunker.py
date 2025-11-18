@@ -8,7 +8,7 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_experimental.text_splitter import SemanticChunker
 
-from src.shared.config import ChunkingSettings
+from src.shared.config.config import ChunkingSettings
 
 
 class SemanticChunkerAdapter:

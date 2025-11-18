@@ -1,26 +1,26 @@
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 
 from pypdf import PdfReader
 
 
 class OcrPolicyDecider:
-    """Decide whether to enable OCR for a given document path."""
-
+    """Decide whether to enable OCR for a given in-memory document."""
 
     def __init__(self, *, sample_pages: int = 5, char_threshold: int = 200) -> None:
         self.sample_pages = sample_pages
         self.char_threshold = char_threshold
 
-    def should_ocr(self, path: str | Path) -> bool:
-        suffix = Path(path).suffix.lower()
+    def should_ocr(self, *, filename: str, document_bytes: bytes) -> bool:
+        suffix = Path(filename).suffix.lower()
         if suffix == ".pdf":
-            return self._should_ocr_pdf(path)
+            return self._should_ocr_pdf(document_bytes)
         # Non-PDF formats do not use this toggle; return False by default.
         return False
 
-    def _should_ocr_pdf(self, path: str | Path) -> bool:
+    def _should_ocr_pdf(self, document_bytes: bytes) -> bool:
         """
         Determine the need for OCR by sampling the PDF text layer.
 
@@ -29,7 +29,7 @@ class OcrPolicyDecider:
         """
 
         try:
-            reader = PdfReader(str(path))
+            reader = PdfReader(BytesIO(document_bytes))
         except Exception:
             return True
 

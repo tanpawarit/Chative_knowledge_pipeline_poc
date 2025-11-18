@@ -1,4 +1,3 @@
-import logging
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Iterable, List, Literal, Optional, Type
@@ -21,12 +20,13 @@ from src.document_extraction.infrastructure.config import (
     PICTURE_MODEL,
     PICTURE_PROMPT,
 )
-from src.cost_management.infrastructure.mistral_cost_tracker import (
+from src.shared.cost_management.mistral_cost_tracker import (
     mistral_cost_tracker,
 )
+from src.shared.logging.logger import get_logger
 
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 class MistralPictureDescriptionOptions(PictureDescriptionBaseOptions):
@@ -133,7 +133,9 @@ class MistralPictureDescriptionModel(PictureDescriptionBaseModel):
                     max_tokens=self.options.max_output_tokens,
                 )
             except Exception as exc:  # pragma: no cover - shielding API errors
-                _log.warning("Mistral picture description failed: %s", exc)
+                _log.warning(
+                    "Mistral picture description failed", error=str(exc)
+                )
                 return ""
 
             mistral_cost_tracker.record_chat_completion(

@@ -1,1 +1,1 @@
-[] implement log eg.structlog
+[] implement cron check document. db, vector

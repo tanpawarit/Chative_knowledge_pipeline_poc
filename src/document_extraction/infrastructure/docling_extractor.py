@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import os
 import warnings
+from io import BytesIO
+from pathlib import Path
 
 from docling.document_converter import (
     AsciiDocFormatOption,
@@ -14,14 +15,13 @@ from docling.document_converter import (
     PowerpointFormatOption,
     WordFormatOption,
 )
-from docling.datamodel.base_models import InputFormat
+from docling.datamodel.base_models import DocumentStream, InputFormat
 from docling_core.transforms.serializer.markdown import (
     MarkdownDocSerializer,
     MarkdownParams,
 )
-from dotenv import load_dotenv  # type: ignore
 
-from src.cost_management.infrastructure.mistral_cost_tracker import (
+from src.shared.cost_management.mistral_cost_tracker import (
     mistral_cost_tracker,
 )
 from src.document_extraction.domain.ocr_policy import OcrPolicyDecider
@@ -42,11 +42,14 @@ from src.document_extraction.infrastructure.pipeline_option import (
 from src.document_extraction.infrastructure.picture_serializer import (
     CommentPictureSerializer,
 )
+from src.shared.config.env import require_env
+from src.shared.logging.logger import get_logger
+
+logger = get_logger(__name__)
 
 
-def run_extraction(source: str) -> str:
-    """Convert a document into Markdown and return the serialized text."""
-    load_dotenv()
+def run_extraction(document_bytes: bytes, *, filename: str) -> str:
+    """Convert an in-memory document into Markdown and return the serialized text."""
 
     # Suppress benign RuntimeWarnings coming from Docling confidence aggregation
     # (e.g., "Mean of empty slice") when metrics are not applicable for a format.
@@ -54,11 +57,7 @@ def run_extraction(source: str) -> str:
         "ignore", category=RuntimeWarning, message="Mean of empty slice"
     )
 
-    mistral_key = os.getenv("MISTRAL_KEY")
-    if not mistral_key:
-        raise RuntimeError(
-            "Missing MISTRAL_KEY. Set it in .env or environment."
-        )
+    mistral_key = require_env("MISTRAL_KEY")
 
     # Reset usage tracking for a fresh run and apply any runtime pricing overrides.
     mistral_cost_tracker.reset()
@@ -66,7 +65,7 @@ def run_extraction(source: str) -> str:
 
     # Decide OCR policy per file/format
     policy = OcrPolicyDecider()
-    do_ocr = policy.should_ocr(source)
+    do_ocr = policy.should_ocr(filename=filename, document_bytes=document_bytes)
 
     pdf_pipeline_opts = build_pdf_pipeline_options(
         mistral_key,
@@ -116,8 +115,26 @@ def run_extraction(source: str) -> str:
         },
     )
 
-    print(f"OCR policy: do_ocr={do_ocr} for {source}")
-    result = converter.convert(source)
+    logger.info("OCR policy decided", do_ocr=do_ocr, filename=filename)
+    suffix = Path(filename).suffix.lower()
+    is_plain_text = suffix == ".txt"
+
+    if is_plain_text:
+        try:
+            text_content = document_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            text_content = document_bytes.decode("utf-8", errors="ignore")
+        result = converter.convert_string(
+            content=text_content,
+            format=InputFormat.MD,
+            name=filename,
+        )
+    else:
+        stream = DocumentStream(
+            name=filename,
+            stream=BytesIO(document_bytes),
+        )
+        result = converter.convert(stream)
 
     serializer = MarkdownDocSerializer(
         doc=result.document,
@@ -126,12 +143,12 @@ def run_extraction(source: str) -> str:
     )
     markdown = serializer.serialize().text
 
-    print(f"Mean_grade: {result.confidence.mean_grade.value}")
-    print(mistral_cost_tracker.format_report())
+    logger.info(
+        "Docling confidence",
+        mean_grade=result.confidence.mean_grade.value,
+    )
+    logger.info(
+        "Mistral usage report", report=mistral_cost_tracker.format_report()
+    )
 
     return markdown
-
-
-def main_extraction(source: str) -> str:
-    """Wrapper that returns the extracted Markdown string."""
-    return run_extraction(source)

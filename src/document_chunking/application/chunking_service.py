@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import List
 
 from langchain_core.embeddings import Embeddings
 
@@ -17,16 +17,13 @@ from src.document_chunking.infrastructure.markdown_splitter import (
 from src.document_chunking.infrastructure.semantic_chunker import (
     SemanticChunkerAdapter,
 )
-from src.knowledge_embedding.infrastructure.openai_client import (
-    OpenAIEmbedder,
-    OpenAIEmbeddings,
-)
 from src.shared.config import ChunkingSettings
+from src.shared.embeddings import create_embedding_runtime
 
 
 def _default_embeddings(settings: ChunkingSettings) -> Embeddings:
-    embedder = OpenAIEmbedder(settings.embedding)
-    return OpenAIEmbeddings(embedder)
+    runtime = create_embedding_runtime(settings.embedding)
+    return runtime.embeddings
 
 
 def generate_document_chunks(
@@ -34,15 +31,15 @@ def generate_document_chunks(
     *,
     source: str,
     doc_name: str,
-    doc_hash: str,
+    document_id: str,
     settings: ChunkingSettings,
 ) -> List[DocumentChunk]:
     """Split markdown into semantic chunks with normalized metadata."""
 
     if not doc_name:
         raise ValueError("doc_name is required to generate document chunks")
-    if not doc_hash:
-        raise ValueError("doc_hash is required to generate document chunks")
+    if not document_id:
+        raise ValueError("document_id is required to generate document chunks")
 
     base_sections = split_markdown_structure(
         markdown,
@@ -52,7 +49,7 @@ def generate_document_chunks(
     if not base_sections:
         return []
 
-    document = DocumentMetadata(doc_name=doc_name, doc_hash=doc_hash, source=source)
+    document = DocumentMetadata(doc_name=doc_name, document_id=document_id, source=source)
 
     embed_backend = _default_embeddings(settings)
     chunker = SemanticChunkerAdapter(embed_backend, settings)
@@ -76,9 +73,4 @@ def generate_document_chunks(
     )
 
 
-def to_records(chunks: Iterable[DocumentChunk]) -> List[dict]:
-    """Utility to convert domain chunks to the legacy dict form."""
-    return [chunk.to_record() for chunk in chunks]
-
-
-__all__ = ["generate_document_chunks", "to_records"]
+__all__ = ["generate_document_chunks"]
